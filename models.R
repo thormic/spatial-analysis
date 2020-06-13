@@ -2,8 +2,17 @@ censusData <- read.csv("census_data.csv")
 houseData <- read.csv("house_data.csv")
 
 # Create spatial DF for houses
-House.Points <-SpatialPointsDataFrame(houseData[,6:7], houseData,
+House.Points <- SpatialPointsDataFrame(houseData[,6:7], houseData,
                                      proj4string = CRS("+init=EPSG:27700"))
+
+
+House.Agg <- houseData %>%
+  group_by(oa11) %>%
+  dplyr::summarize(mean_price = mean(price_paid, na.rm=TRUE))
+
+houses_merged <-  censusData %>%
+  inner_join(House.Agg, by = c("OA" = "oa11"))
+
 
 # Load spatial files for Kensington and Chelsea
 Output.Areas <- readOGR("data/statistical-gis-boundaries-london/ESRI", "OA_2011_London_gen_MHW")
@@ -14,6 +23,8 @@ plot(Output.Areas)
 OA.Census <- merge(Output.Areas, censusData, by.y ="OA", by.x="OA11CD")
 proj4string(OA.Census) <- CRS("+init=EPSG:27700")
 
+OA.Census.mp <- merge(Output.Areas, houses_merged, by.y ="OA", by.x="OA11CD", all = FALSE)
+proj4string(OA.Census.mp) <- CRS("+init=EPSG:27700")
 
 tm_shape(OA.Census) + tm_fill("employed", palette = "Blues", style = "quantile",
                               title = "% employed") + tm_borders(alpha=.4)
@@ -213,6 +224,103 @@ print(map10, vp=viewport(layout.pos.col = 2, layout.pos.row =5))
 
 
 
+
+
+
+
+# -------------------  LINEAR MODEL - PRICE ------------------- 
+names(OA.Census[,18:56])
+
+model <- lm(OA.Census.mp$mean_price ~ ., data = OA.Census.mp[,18:58])
+k <- ols_step_backward_p(model, details=TRUE)
+
+sig_cols <- c( 'single', 'muslim','highest_quali', 'jewish', 'asian', 'one_car', 'no_cars',
+               'Age_30_44', 'employed', 'private_rent')
+model_sig <- lm(OA.Census.mp$mean_price ~ ., data = OA.Census.mp[sig_cols])
+summary(model_sig)
+
+# plot resids
+resids<-residuals(model_sig)
+map.resids <- cbind(OA.Census.mp, resids)
+# we need to rename the column header from the resids file
+# in this case its the 6th column of map.resids
+names(map.resids)[58] <- "resids"
+# maps the residuals using the quickmap function from tmap
+qtm(map.resids, fill = "resids")
+
+
+
+# ------------------- GWR - PRICE ------------------- 
+
+
+
+#calculate kernel bandwidth
+GWRbandwidth <- gwr.sel(OA.Census.mp$mean_price ~ ., data = OA.Census.mp[,sig_cols], adapt =TRUE)
+
+
+gwr.model = gwr(OA.Census.mp$mean_price ~ .,
+                data = OA.Census.mp[,sig_cols], adapt=GWRbandwidth, hatmatrix=TRUE, se.fit=TRUE)
+#print the results of the model
+gwr.model
+
+results <-as.data.frame(gwr.model$SDF)
+names(results)
+
+gwr.map <- cbind(OA.Census.mp[,sig_cols], as.matrix(results))
+qtm(gwr.map, fill = "localR2")
+
+names(gwr.map)
+
+# create tmap objects
+map1 <- tm_shape(gwr.map) + tm_fill("single", n = 5, style = "quantile",
+                                    title = "single") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map2 <- tm_shape(gwr.map) + tm_fill("single.1", n = 5, style = "quantile",
+                                    title = "single Coefficient") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map3 <- tm_shape(gwr.map) + tm_fill("black_african", n = 5, style = "quantile",
+                                    title = "black_african") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map4 <- tm_shape(gwr.map) + tm_fill("OA.Census.black_african", n = 5, style = "quantile",
+                                    title = "black_african Coefficient") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+
+map5 <- tm_shape(gwr.map) + tm_fill("single", n = 5, style = "quantile",
+                                    title = "single") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map6 <- tm_shape(gwr.map) + tm_fill("OA.Census.single", n = 5, style = "quantile",
+                                    title = "single Coefficient") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map7 <- tm_shape(gwr.map) + tm_fill("lowest_quali", n = 5, style = "quantile",
+                                    title = "lowest_quali") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map8 <- tm_shape(gwr.map) + tm_fill("OA.Census.lowest_quali", n = 5, style = "quantile",
+                                    title = "lowest_quali Coefficient") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map9 <- tm_shape(gwr.map) + tm_fill("highest_quali", n = 5, style = "quantile",
+                                    title = "highest_quali") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map10 <- tm_shape(gwr.map) + tm_fill("OA.Census.highest_quali", n = 5, style = "quantile",
+                                     title = "highest_quali Coefficient") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+
+
+grid.newpage()
+# assigns the cell size of the grid, in this case 2 by 2
+pushViewport(viewport(layout=grid.layout(2,2)))
+# prints a map object into a defined cell
+print(map1, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
+print(map2, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
+print(map3, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
+print(map4, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
+
+print(map5, vp=viewport(layout.pos.col = 1, layout.pos.row =3))
+print(map6, vp=viewport(layout.pos.col = 2, layout.pos.row =3))
+print(map7, vp=viewport(layout.pos.col = 1, layout.pos.row =4))
+print(map8, vp=viewport(layout.pos.col = 2, layout.pos.row =4))
+
+print(map9, vp=viewport(layout.pos.col = 1, layout.pos.row =5))
+print(map10, vp=viewport(layout.pos.col = 2, layout.pos.row =5))
 
 
 

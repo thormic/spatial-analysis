@@ -1,0 +1,19 @@
+---
+title: "rpubs_spatial"
+author: "Bartlomiej Kowalczuk"
+date: "13 06 2020"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+source("load_libraries.R")
+```
+
+## Spatial analysis of Kensington and Chelsea district in London (on OA level) - including house prices.
+
+```{r pressure, echo=FALSE}
+Output.Areas <- readOGR("data/statistical-gis-boundaries-london/ESRI", "OA_2011_London_gen_MHW")
+Output.Areas <- Output.Areas[Output.Areas$LAD11NM=="Kensington and Chelsea",]
+plot(Output.Areas)
+```

@@ -140,8 +140,8 @@ house_prices <- read.csv("data/house_prices.csv")
 postcodeRdr <- read.csv("data/NSPL_MAY_2020_UK_SW.csv")
 postcodeRdr2 <- read.csv("data/NSPL_MAY_2020_UK_W.csv")
 postRdr <- rbind(postcodeRdr, postcodeRdr2)
-houses_merged <- house_prices %>% inner_join(postRdr[ , c("oseast1m", "osnrth1m", "pcds")], by = c("postcode" = "pcds"))
-houses <- houses_merged[,c(1, 2, 5, 6, 7, 32, 33)]
+houses_merged <- house_prices %>% inner_join(postRdr[ , c("oseast1m", "osnrth1m", "pcds", "oa11")], by = c("postcode" = "pcds"))
+houses <- houses_merged[,c(1, 2, 5, 6, 7, 32, 33, 34)]
 
 
 

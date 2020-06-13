@@ -32,12 +32,14 @@ House.Points <-SpatialPointsDataFrame(houseData[,6:7], houseData,
 
 hist_df <- gather(Census.Data[,-1], key = "name", value = "value")
 
+
+
 # plot histograms of all variables
 ggplot(hist_df) +
   geom_histogram(aes(value)) +
   facet_wrap(~name, ncol = 5) +
   ggtitle("Histograms of all variables")
-
+dev.off()
 # Boxplots for chosen variables
 boxplot(Census.Data$christian, Census.Data$muslim, Census.Data$jewish,
         Census.Data$no_religion, ylim=c(0,100),
@@ -152,3 +154,4 @@ tm_fill(alpha=.1, col = "#fb6a4a") +
   tm_shape(range25) + tm_borders(alpha=.7, col = "#a50f15", lwd = 2) +
   tm_fill(alpha=.1, col = "#a50f15") +
   tm_layout(frame = FALSE)
+

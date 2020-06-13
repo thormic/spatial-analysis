@@ -15,6 +15,9 @@ OA.Census <- merge(Output.Areas, censusData, by.y ="OA", by.x="OA11CD")
 proj4string(OA.Census) <- CRS("+init=EPSG:27700")
 
 
+tm_shape(OA.Census) + tm_fill("employed", palette = "Blues", style = "quantile",
+                              title = "% employed") + tm_borders(alpha=.4)
+
 
 # ------------------- Finding neighbours -------------------
 
@@ -39,7 +42,9 @@ listw
 
 # MORAN TEST ON EMPLOYED VARIABLE
 moran.test(OA.Census$employed, listw)
-# employed has 0.34 moran statistic so it has a slight postitive autocorrelation - we may say that the data does spatially cluster
+# employed has 0.34 moran statistic so it has a slight postitive autocorrelation - 
+# we may say that the data does spatially cluster
+
 
 # ------------------- Running a local spatial autocorrelation -------------------
 # run it two times to make it work
@@ -49,8 +54,7 @@ moran <- moran.plot(OA.Census$employed, listw = nb2listw(neighbours2, style = "W
 local <- localmoran(x = OA.Census$employed,
                     listw = nb2listw(neighbours2, style = "W"))
 moran.map <- cbind(OA.Census, local)
-tm_shape(moran.map) + tm_fill(col = "Ii", style = "quantile",
-                              title = "local moran statistic")
+tm_shape(moran.map) + tm_fill(col = "Ii", style = "quantile", palette = "GnBu", title = "local moran statistic")
 
 
 # -------------------  to create LISA cluster map ------------------- 
@@ -93,49 +97,65 @@ plot(nb, coordinates(OA.Census), add=TRUE, col = 'red')
 # compute Getis-Ord Gi statistic - NOT WORKING
 local_g <- localG(OA.Census$employed, nb_lw)
 local_g <- cbind(OA.Census, as.matrix(local_g))
-names(local_g)[6] <- "gstat"
+names(local_g)[58] <- "gstat"
 
 tm_shape(local_g) + tm_fill("gstat", palette = "RdBu", style = "pretty") +
   tm_borders(alpha=.4)
 
 
 # -------------------  LINEAR MODEL ------------------- 
+names(OA.Census[,18:56])
 
-model <- lm(OA.Census$employed ~ OA.Census$white+OA.Census$males)
+reg_cols <- c('Age_0_17', 'Age_18_29', 'Age_30_44','Age_45_64', 'Age_65_up',
+              'males', 'united_kingdom', 'ireland', 'other_eu','other_countries',
+              'white', 'black_african', 'kids_english', 'single', 'lowest_quali',
+              'highest_quali', 'christian', 'muslim', 'jewish', 'no_religion', 'owned')
+
+model <- lm(OA.Census$employed ~ ., data = OA.Census[,reg_cols])
 summary(model)
-par(mfrow=c(2,2))
-plot(model)
+# model <- lm(OA.Census$employed ~ ., data = OA.Census[,18:56])
+# k <- ols_step_backward_p(model, details=TRUE)
+
+sig_cols <- c('males','white', 'black_african', 'kids_english', 'single', 'lowest_quali',
+              'highest_quali')
+
+model_sig <- lm(OA.Census$employed ~ ., data = OA.Census[,sig_cols])
+summary(model_sig)
 
 
-# DOES NOT WORK - try different variables 
+sig_cols_2 <- c('white', 'black_african', 'single', 'lowest_quali','highest_quali')
+model_sig_2 <- lm(OA.Census$employed ~ .-1, data = OA.Census[,sig_cols_2])
+summary(model_sig_2)
 
-resids<-residuals(model)
+# par(mfrow=c(2,2))
+plot(model_sig_2)
+
+# plot resids
+resids<-residuals(model_sig_2)
 map.resids <- cbind(OA.Census, resids)
 # we need to rename the column header from the resids file
 # in this case its the 6th column of map.resids
-names(map.resids)[6] <- "resids"
+names(map.resids)[58] <- "resids"
 # maps the residuals using the quickmap function from tmap
 qtm(map.resids, fill = "resids")
-
 
 
 
 # ------------------- GWR ------------------- 
 
 #calculate kernel bandwidth
-GWRbandwidth <- gwr.sel(OA.Census$employed ~ OA.Census$males +
-                          OA.Census$white, data=OA.Census, adapt =TRUE)
+GWRbandwidth <- gwr.sel(OA.Census$employed ~ .-1, data = OA.Census[,sig_cols_2], adapt =TRUE)
 
 
-gwr.model = gwr(OA.Census$employed ~ OA.Census$males+OA.Census$white,
-                data = OA.Census, adapt=GWRbandwidth, hatmatrix=TRUE, se.fit=TRUE)
+gwr.model = gwr(OA.Census$employed ~ .-1,
+                data = OA.Census[,sig_cols_2], adapt=GWRbandwidth, hatmatrix=TRUE, se.fit=TRUE)
 #print the results of the model
 gwr.model
 
 results <-as.data.frame(gwr.model$SDF)
 names(results)
 
-gwr.map <- cbind(OA.Census, as.matrix(results))
+gwr.map <- cbind(OA.Census[,sig_cols_2], as.matrix(results))
 qtm(gwr.map, fill = "localR2")
 
 
@@ -146,12 +166,32 @@ map1 <- tm_shape(gwr.map) + tm_fill("white", n = 5, style = "quantile",
 map2 <- tm_shape(gwr.map) + tm_fill("OA.Census.white", n = 5, style = "quantile",
                                     title = "white Coefficient") +
   tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map3 <- tm_shape(gwr.map) + tm_fill("males", n = 5, style = "quantile",
-                                    title = "males") +
+map3 <- tm_shape(gwr.map) + tm_fill("black_african", n = 5, style = "quantile",
+                                    title = "black_african") +
   tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map4 <- tm_shape(gwr.map) + tm_fill("OA.Census.males", n = 5, style = "quantile",
-                                    title = "males Coefficient") +
+map4 <- tm_shape(gwr.map) + tm_fill("OA.Census.black_african", n = 5, style = "quantile",
+                                    title = "black_african Coefficient") +
   tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+
+map5 <- tm_shape(gwr.map) + tm_fill("single", n = 5, style = "quantile",
+                                    title = "single") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map6 <- tm_shape(gwr.map) + tm_fill("OA.Census.single", n = 5, style = "quantile",
+                                    title = "single Coefficient") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map7 <- tm_shape(gwr.map) + tm_fill("lowest_quali", n = 5, style = "quantile",
+                                    title = "lowest_quali") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map8 <- tm_shape(gwr.map) + tm_fill("OA.Census.lowest_quali", n = 5, style = "quantile",
+                                    title = "lowest_quali Coefficient") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map9 <- tm_shape(gwr.map) + tm_fill("highest_quali", n = 5, style = "quantile",
+                                    title = "highest_quali") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map10 <- tm_shape(gwr.map) + tm_fill("OA.Census.highest_quali", n = 5, style = "quantile",
+                                    title = "highest_quali Coefficient") +
+  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+
 
 grid.newpage()
 # assigns the cell size of the grid, in this case 2 by 2
@@ -161,6 +201,19 @@ print(map1, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
 print(map2, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
 print(map3, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
 print(map4, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
+
+print(map5, vp=viewport(layout.pos.col = 1, layout.pos.row =3))
+print(map6, vp=viewport(layout.pos.col = 2, layout.pos.row =3))
+print(map7, vp=viewport(layout.pos.col = 1, layout.pos.row =4))
+print(map8, vp=viewport(layout.pos.col = 2, layout.pos.row =4))
+
+print(map9, vp=viewport(layout.pos.col = 1, layout.pos.row =5))
+print(map10, vp=viewport(layout.pos.col = 2, layout.pos.row =5))
+
+
+
+
+
 
 
 # ------------------- Interpolation ------------------- 
@@ -190,7 +243,7 @@ tm_shape(Output.Areas) + tm_fill(alpha=.3, col = "grey") +
 
 
 # maps house prices across thiessen polygons
-tm_shape(thiessen.crop) + tm_fill(col = "price_paid", style = "quantile", palette = "Reds",
+tm_shape(thiessen.crop) + tm_fill(col = "price_paid", style = "quantile", palette = "Blues",
                                   title = "Price Paid (£)") +
   tm_borders(alpha=.3, col = "black") +
   tm_shape(House.Points) + tm_dots(col = "black", scale = 0.5) +
@@ -253,7 +306,7 @@ masked_idw <- mask(raster_idw, Output.Areas)
 # plots the masked raster
 tm_shape(masked_idw) + tm_raster("prediction", style = "quantile", n = 100,
                                  legend.show = FALSE) +
-  tm_shape(House.Points) + tm_bubbles(size = "Price", col = "Price",
+  tm_shape(House.Points) + tm_bubbles(size = "price_paid", col = "price_paid",
                                       palette = "Blues", style = "quantile",
                                       legend.size.show = FALSE,
                                       title.col = "Price Paid (£)") +

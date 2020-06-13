@@ -19,7 +19,9 @@ list.of.packages <- c("ggplot2",
                       "gstat",
                       "xts",
                       "rgl",
-                      "automap")
+                      "automap",
+                      "olsrr"
+                      )
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -46,3 +48,4 @@ library(gstat)
 library(xts)
 library(rgl)
 library(automap)
+library(olsrr)

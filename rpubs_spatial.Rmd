@@ -1,5 +1,5 @@
 ---
-title: "rpubs_spatial"
+title: "Spatial analysis of Kensington and Chelsea district in London (on OA level) - including house prices."
 author: "Bartlomiej Kowalczuk & Michal Thor"
 date: "13 06 2020"
 output: html_document
@@ -11,9 +11,23 @@ output: html_document
 source("load_libraries.R")
 ```
 
-## Spatial analysis of Kensington and Chelsea district in London (on OA level) - including house prices.
+# Spatial analysis of Kensington and Chelsea district in London (on OA level) - including house prices.
 
-```{r load_data, echo=FALSE, include=FALSE}
+## Short decription:
+In this project we conducted spatial analysis of Kensington and Chelsea district (later referred to as K&D) in London. We used data from:
+- [Nomis site](https://www.nomisweb.co.uk/query/select/getdatasetbytheme.asp?opt=3&theme=&subgrp=)
+-- We used data from 2011 Census on OA level (lowest division). All the data was downloaded in percentages
+- [HM Land Registry](https://landregistry.data.gov.uk/app/ppd/)
+-- We used data for house sales made in Kensington and Chelsea district in 2011
+
+## Context
+
+## Hypothesis
+
+
+## Loading the data:
+First, let us load the previously prepared data:
+```{r load_data, echo=TRUE}
 
 Census.Data <- read.csv("census_data.csv")
 houseData <- read.csv("house_data.csv")
@@ -40,6 +54,9 @@ OA.Census.mp <- merge(Output.Areas, houses_merged, by.y ="OA", by.x="OA11CD", al
 proj4string(OA.Census.mp) <- CRS("+init=EPSG:27700")
 ```
 
+## Exploratory Data Analysis:
+
+We use histograms to explore denisty of each variable, take a brief look into how the dataset looks like and check for any potential model variables in the further analysis.
 ```{r histograms, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
 
 ggplot(hist_df) +
@@ -52,21 +69,25 @@ ggplot(hist_df) +
 dev.off()
 ```
 
+Now, let's check distribution of percentages across all OA's of religion-based variables, race-based and certain chosen variables.
 ```{r boxplots, echo = FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
 
-# Boxplots for chosen variables
 boxplot(Census.Data$christian, Census.Data$muslim, Census.Data$jewish,
         Census.Data$no_religion, ylim=c(0,100),
         col = "dodgerblue", rectCol="dodgerblue3", colMed="dodgerblue4",
         names=c("Christian", "Muslim", "Jewish", "No religion"),
         main = "Distribution of religions per OA")
-
+```
+We can see that the majority of inhabitants of K&D are christian - however there are many outliers in muslim religion meaning that there could be heavy muslim-biased OA districts in K&D.
+```{r boxplots, echo = FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
 boxplot(Census.Data$white, Census.Data$black_african, Census.Data$asian,
         Census.Data$other_arab, ylim=c(0,100),
         col = "dodgerblue", rectCol="dodgerblue3", colMed="dodgerblue4",
         names=c("White people", "Black/African", "Asian", "Other/Arabs"),
-        main = "Distribution of religions per OA")
-
+        main = "Distribution of race per OA")
+```
+Once again, there is one overwhelming group - white people, but there are few outliers in every religion, therefore meaning again that we might have some districts that would greatly differ from the rest.
+```{r boxplots, echo = FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
 boxplot(Census.Data$employed, Census.Data$unemployed, Census.Data$kids_english, Census.Data$male, Census.Data$white,
         Census.Data$Age_30_44, Census.Data$married, Census.Data$owned,  ylim=c(0,100),
         col = "dodgerblue", rectCol="dodgerblue3", colMed="dodgerblue4",
@@ -74,7 +95,9 @@ boxplot(Census.Data$employed, Census.Data$unemployed, Census.Data$kids_english, 
         main = "Distribution of certain variables per OA")
 
 ```
+Finally, looking at the distribution of chosen variables, we can see that there are for example OA's with very low employment rate or rather high percentage of families where only children under age of 6 have English as their primiary language, so we expect (considering previous two boxplots) that whole K&D might be divised into wealthy areas, poor areas, areas mostly occupied by immigrants and religious based areas. That is a good starting point for further spatial analysis.
 
+Now let us explore dependencies between some variables that we would expect to be somehow correlated. We can see that on scatterplots below:
 ```{r scatterplots, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
 
 # Scatterplots with regression line
@@ -82,11 +105,15 @@ boxplot(Census.Data$employed, Census.Data$unemployed, Census.Data$kids_english, 
 p <- ggplot(Census.Data, aes(unemployed, highest_quali))
 p + geom_point(aes(colour = muslim, size = black_african)) 
 
-p2 <- ggplot(Census.Data, aes(highest_quali, no_religion))
+p2 <- ggplot(Census.Data, aes(highest_quali, employed))
 p2 + geom_point(aes(colour = white, size = other_eu))
 
 ```
+Looking at the first one we can see that there is a negative correlation between percentage of highest qualification within OA and the unemployment rate. Additionally OA's with more black/african people and of muslim faith are mostly the ones with highest unemployment rate. That indicates that there might be a problem in employment opportunities and education for immigrants. 
 
+On the second one the correlation between being employment rate and percentage of inhabitants with highest qualification is rather positive. However, what is interesting is that OA's with the most qualified and highest employment rate are also the ones with the most white people from european countries other than United Kingdom. That might raise suspicion, that there might be racial problem for immigrants - it is far easier for you to get education and employment if you are white. One would argue that many students from across Europe aspire to study/work in London, so this might also create the bias. However this thesis is not supported by gathered data.
+
+Correlation plot:
 ```{r correlation, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
 
 # Correlation plot
@@ -95,6 +122,8 @@ M<-cor(Census.Data[,-1])
 corrplot(M, type="upper", order="hclust",
          col=brewer.pal(n=8, name="RdYlBu"))
 ```
+Variables that we expected to be correlated with each other matched the expectations. Most of the non-white non-native OA's are also the ones with most social rented flats, biggest unemployment rate and with lowest qualification.
+
 
 ```{r var_maps, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
 

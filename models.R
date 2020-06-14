@@ -23,11 +23,13 @@ plot(Output.Areas)
 OA.Census <- merge(Output.Areas, censusData, by.y ="OA", by.x="OA11CD")
 proj4string(OA.Census) <- CRS("+init=EPSG:27700")
 
+tm_shape(OA.Census) + tm_fill("employed", palette = "Blues", style = "quantile",
+                              title = "% employed") + tm_borders(alpha=.4)
+
 OA.Census.mp <- merge(Output.Areas, houses_merged, by.y ="OA", by.x="OA11CD", all = FALSE)
 proj4string(OA.Census.mp) <- CRS("+init=EPSG:27700")
 
-tm_shape(OA.Census) + tm_fill("employed", palette = "Blues", style = "quantile",
-                              title = "% employed") + tm_borders(alpha=.4)
+
 
 
 # ------------------- Finding neighbours -------------------
@@ -168,59 +170,65 @@ names(results)
 
 gwr.map <- cbind(OA.Census[,sig_cols_2], as.matrix(results))
 qtm(gwr.map, fill = "localR2")
-
+names(gwr.map)
 
 # create tmap objects
-map1 <- tm_shape(gwr.map) + tm_fill("white", n = 5, style = "quantile",
+map1 <- tm_shape(gwr.map) + tm_fill("white", n = 5, style = "quantile", palette="Blues",
                                     title = "white") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map2 <- tm_shape(gwr.map) + tm_fill("OA.Census.white", n = 5, style = "quantile",
-                                    title = "white Coefficient") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map3 <- tm_shape(gwr.map) + tm_fill("black_african", n = 5, style = "quantile",
-                                    title = "black_african") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map4 <- tm_shape(gwr.map) + tm_fill("OA.Census.black_african", n = 5, style = "quantile",
-                                    title = "black_african Coefficient") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-
-map5 <- tm_shape(gwr.map) + tm_fill("single", n = 5, style = "quantile",
+ tm_layout(frame = FALSE)
+map2 <- tm_shape(gwr.map) + tm_fill("white.1", n = 5, style = "quantile", palette="Blues",
+                                    title = "white coefficient") +
+  tm_layout(frame = FALSE)
+map3 <- tm_shape(gwr.map) + tm_fill("black_african", n = 5, style = "quantile", palette="Blues",
+                                    title = "black") +
+  tm_layout(frame = FALSE)
+map4 <- tm_shape(gwr.map) + tm_fill("black_african.1", n = 5, style = "quantile", palette="Blues",
+                                    title = "black coefficient") +
+  tm_layout(frame = FALSE)
+map5 <- tm_shape(gwr.map) + tm_fill("single", n = 5, style = "quantile", palette="Blues",
                                     title = "single") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map6 <- tm_shape(gwr.map) + tm_fill("OA.Census.single", n = 5, style = "quantile",
-                                    title = "single Coefficient") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map7 <- tm_shape(gwr.map) + tm_fill("lowest_quali", n = 5, style = "quantile",
-                                    title = "lowest_quali") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map8 <- tm_shape(gwr.map) + tm_fill("OA.Census.lowest_quali", n = 5, style = "quantile",
-                                    title = "lowest_quali Coefficient") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map9 <- tm_shape(gwr.map) + tm_fill("highest_quali", n = 5, style = "quantile",
-                                    title = "highest_quali") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map10 <- tm_shape(gwr.map) + tm_fill("OA.Census.highest_quali", n = 5, style = "quantile",
-                                    title = "highest_quali Coefficient") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+  tm_layout(frame = FALSE)
+map6 <- tm_shape(gwr.map) + tm_fill("single.1", n = 5, style = "quantile", palette="Blues",
+                                    title = "single coefficient") +
+  tm_layout(frame = FALSE)
+map7 <- tm_shape(gwr.map) + tm_fill("lowest_quali", n = 5, style = "quantile", palette="Blues",
+                                    title = "lowest qualifications") +
+  tm_layout(frame = FALSE)
+map8 <- tm_shape(gwr.map) + tm_fill("lowest_quali.1", n = 5, style = "quantile", palette="Blues",
+                                    title = "lowest qualifications coefficient") +
+  tm_layout(frame = FALSE)
+map9 <- tm_shape(gwr.map) + tm_fill("highest_quali", n = 5, style = "quantile", palette="Blues",
+                                    title = "highest qualifications") +
+  tm_layout(frame = FALSE)
+map10 <- tm_shape(gwr.map) + tm_fill("highest_quali.1", n = 5, style = "quantile", palette="Blues",
+                                    title = "highest qualifications coefficient") +
+  tm_layout(frame = FALSE)
 
-
+# --- FIRST 2 VARIABLES
 grid.newpage()
-# assigns the cell size of the grid, in this case 2 by 2
 pushViewport(viewport(layout=grid.layout(2,2)))
-# prints a map object into a defined cell
+
 print(map1, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
 print(map2, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
 print(map3, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
 print(map4, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
 
-print(map5, vp=viewport(layout.pos.col = 1, layout.pos.row =3))
-print(map6, vp=viewport(layout.pos.col = 2, layout.pos.row =3))
-print(map7, vp=viewport(layout.pos.col = 1, layout.pos.row =4))
-print(map8, vp=viewport(layout.pos.col = 2, layout.pos.row =4))
+# --- SECOND 2 VARIABLES
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(2,2)))
 
-print(map9, vp=viewport(layout.pos.col = 1, layout.pos.row =5))
-print(map10, vp=viewport(layout.pos.col = 2, layout.pos.row =5))
+print(map5, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
+print(map6, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
+print(map7, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
+print(map8, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
 
+
+# --- LAST VARIABLE
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(1,2)))
+
+print(map9, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
+print(map10, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
 
 
 
@@ -271,56 +279,119 @@ qtm(gwr.map, fill = "localR2")
 
 names(gwr.map)
 
+sig_cols <- c( 'single', 'muslim','highest_quali', 'jewish', 'asian', 'one_car', 'no_cars',
+               'Age_30_44', 'employed', 'private_rent')
+
 # create tmap objects
-map1 <- tm_shape(gwr.map) + tm_fill("single", n = 5, style = "quantile",
+map1 <- tm_shape(gwr.map) + tm_fill("single", n = 5, style = "quantile", palette="Greens",
                                     title = "single") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map2 <- tm_shape(gwr.map) + tm_fill("single.1", n = 5, style = "quantile",
-                                    title = "single Coefficient") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map3 <- tm_shape(gwr.map) + tm_fill("black_african", n = 5, style = "quantile",
-                                    title = "black_african") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map4 <- tm_shape(gwr.map) + tm_fill("OA.Census.black_african", n = 5, style = "quantile",
-                                    title = "black_african Coefficient") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+  tm_layout(frame = FALSE)
+map2 <- tm_shape(gwr.map) + tm_fill("single.1", n = 5, style = "quantile", palette="Blues",
+                                    title = "single coefficient") +
+  tm_layout(frame = FALSE)
+map3 <- tm_shape(gwr.map) + tm_fill("muslim", n = 5, style = "quantile", palette="Greens",
+                                    title = "muslim") +
+  tm_layout(frame = FALSE)
+map4 <- tm_shape(gwr.map) + tm_fill("muslim.1", n = 5, style = "quantile", palette="Blues",
+                                    title = "muslim coefficient") +
+  tm_layout(frame = FALSE)
 
-map5 <- tm_shape(gwr.map) + tm_fill("single", n = 5, style = "quantile",
-                                    title = "single") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map6 <- tm_shape(gwr.map) + tm_fill("OA.Census.single", n = 5, style = "quantile",
-                                    title = "single Coefficient") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map7 <- tm_shape(gwr.map) + tm_fill("lowest_quali", n = 5, style = "quantile",
-                                    title = "lowest_quali") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map8 <- tm_shape(gwr.map) + tm_fill("OA.Census.lowest_quali", n = 5, style = "quantile",
-                                    title = "lowest_quali Coefficient") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map9 <- tm_shape(gwr.map) + tm_fill("highest_quali", n = 5, style = "quantile",
-                                    title = "highest_quali") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
-map10 <- tm_shape(gwr.map) + tm_fill("OA.Census.highest_quali", n = 5, style = "quantile",
-                                     title = "highest_quali Coefficient") +
-  tm_layout(frame = FALSE, legend.text.size = 0.5, legend.title.size = 0.6)
+map5 <- tm_shape(gwr.map) + tm_fill("jewish", n = 5, style = "quantile", palette="Greens",
+                                    title = "jewish") +
+  tm_layout(frame = FALSE)
+map6 <- tm_shape(gwr.map) + tm_fill("jewish.1", n = 5, style = "quantile", palette="Blues",
+                                    title = "jewish coefficient") +
+  tm_layout(frame = FALSE)
+map7 <- tm_shape(gwr.map) + tm_fill("asian", n = 5, style = "quantile", palette="Greens",
+                                    title = "asian") +
+  tm_layout(frame = FALSE)
+map8 <- tm_shape(gwr.map) + tm_fill("asian.1", n = 5, style = "quantile", palette="Blues",
+                                    title = "asian coefficient") +
+  tm_layout(frame = FALSE)
+map9 <- tm_shape(gwr.map) + tm_fill("one_car", n = 5, style = "quantile", palette="Greens",
+                                    title = "one_car") +
+  tm_layout(frame = FALSE)
+map10 <- tm_shape(gwr.map) + tm_fill("one_car.1", n = 5, style = "quantile", palette="Blues",
+                                     title = "one_car coefficient") +
+  tm_layout(frame = FALSE)
+
+map11 <- tm_shape(gwr.map) + tm_fill("no_cars", n = 5, style = "quantile", palette="Greens",
+                                    title = "no_cars") +
+  tm_layout(frame = FALSE)
+map12 <- tm_shape(gwr.map) + tm_fill("no_cars.1", n = 5, style = "quantile", palette="Blues",
+                                    title = "no_cars coefficient") +
+  tm_layout(frame = FALSE)
+map13 <- tm_shape(gwr.map) + tm_fill("Age_30_44", n = 5, style = "quantile", palette="Greens",
+                                     title = "Age_30_44") +
+  tm_layout(frame = FALSE)
+map14 <- tm_shape(gwr.map) + tm_fill("Age_30_44.1", n = 5, style = "quantile", palette="Blues",
+                                     title = "Age_30_44 coefficient") +
+  tm_layout(frame = FALSE)
+map15 <- tm_shape(gwr.map) + tm_fill("employed", n = 5, style = "quantile", palette="Greens",
+                                     title = "employed") +
+  tm_layout(frame = FALSE)
+map16 <- tm_shape(gwr.map) + tm_fill("employed.1", n = 5, style = "quantile", palette="Blues",
+                                     title = "employed coefficient") +
+  tm_layout(frame = FALSE)
+map17 <- tm_shape(gwr.map) + tm_fill("private_rent", n = 5, style = "quantile", palette="Greens",
+                                     title = "private_rent") +
+  tm_layout(frame = FALSE)
+map18 <- tm_shape(gwr.map) + tm_fill("private_rent.1", n = 5, style = "quantile", palette="Blues",
+                                     title = "private_rent coefficient") +
+  tm_layout(frame = FALSE)
+map19 <- tm_shape(gwr.map) + tm_fill("highest_quali", n = 5, style = "quantile", palette="Greens",
+                                     title = "highest_quali") +
+  tm_layout(frame = FALSE)
+map20 <- tm_shape(gwr.map) + tm_fill("highest_quali.1", n = 5, style = "quantile", palette="Blues",
+                                     title = "highest_quali coefficient") +
+  tm_layout(frame = FALSE)
 
 
+# --- FIRST 2 VARIABLES
 grid.newpage()
-# assigns the cell size of the grid, in this case 2 by 2
 pushViewport(viewport(layout=grid.layout(2,2)))
-# prints a map object into a defined cell
+
 print(map1, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
 print(map2, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
 print(map3, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
 print(map4, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
 
-print(map5, vp=viewport(layout.pos.col = 1, layout.pos.row =3))
-print(map6, vp=viewport(layout.pos.col = 2, layout.pos.row =3))
-print(map7, vp=viewport(layout.pos.col = 1, layout.pos.row =4))
-print(map8, vp=viewport(layout.pos.col = 2, layout.pos.row =4))
+# --- SECOND 2 VARIABLES
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(2,2)))
 
-print(map9, vp=viewport(layout.pos.col = 1, layout.pos.row =5))
-print(map10, vp=viewport(layout.pos.col = 2, layout.pos.row =5))
+print(map5, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
+print(map6, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
+print(map7, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
+print(map8, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
+
+
+# --- THIRD 2 VARIABLES
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(2,2)))
+
+print(map9, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
+print(map10, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
+print(map11, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
+print(map12, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
+
+# --- FOURTH 2 VARIABLES
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(2,2)))
+
+print(map13, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
+print(map14, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
+print(map15, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
+print(map16, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
+
+# --- FIFTH 2 VARIABLES
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(2,2)))
+
+print(map17, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
+print(map18, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
+print(map19, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
+print(map20, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
 
 
 

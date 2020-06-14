@@ -203,9 +203,11 @@ tm_fill(alpha=.1, col = "#fb6a4a") +
 
 ```
 
-## Model part
+## Model part (practical?)
 
-Finding neighbours:
+In this part we are going to focus our study on the causes of the size of the *employed* indicator as well as the *housing prices* in the Royal Borough of Kensington and Chelsea.
+
+Firstly, we need to compute polygons for our dataset, which we are going to use in later parts of the study. Doing this in two different ways results in:
 
 ```{r neighbours, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 
@@ -221,6 +223,8 @@ plot(neighbours2, coordinates(OA.Census), add=TRUE, col='red')
 
 ## Global Spatial Autocorrelation
 
+Having the neighbours computed, we can ran Moran's test, which will result in correlation score for our employed variable.
+
 Moran I Test:
 ```{r global_autocorr, echo=FALSE, warning=FALSE}
 
@@ -228,13 +232,18 @@ Moran I Test:
 listw <- nb2listw(neighbours2)
 moran.test(OA.Census$employed, listw)
 ```
-Employed has 0.34 moran statistic so it has a slight postitive autocorrelation - we may say that the data does spatially cluster.
+
+Employed indicator has 0.34 Moran's I statistic so it has a slight positive autocorrelation. Now, we have reasons to believe that the data does spatially cluster.
 
 ## Local Spatial Autocorrelation
+
+Analysis of the local spatial autocorrelation may result in broader conclusions. 
+
+Below, you can observe local moran statistic on our map broken down by OA:
+
 ```{r local_autocorr, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 
 # ------------------- Running a local spatial autocorrelation -------------------
-# moran <- moran.plot(OA.Census$employed, listw = nb2listw(neighbours2, style = "W"))
 
 # creates a local moran output
 local <- localmoran(x = OA.Census$employed,
@@ -244,7 +253,13 @@ tm_shape(moran.map) + tm_fill(col = "Ii", style = "quantile", palette = "GnBu", 
 
 ```
 
+We can clearly see, that there are indeed areas, which are surrounded by units with similar values - those with positive local moran statistic. This further confirms that the data spatially cluster. However, this map does not bring us the information about those areas/clusters.
+
+To get the insights of each are, we are going to utilize LISA cluster map.
+
 ## LISA cluster map
+
+We set the level of significance to 0.2 for quality visualizations.
 ```{r lisa, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 
 # -------------------  to create LISA cluster map ------------------- 
@@ -270,15 +285,20 @@ plot(OA.Census,border="lightgray",col=colors[findInterval(quadrant,brks,all.insi
 legend("bottomleft",legend=c("insignificant","low-low","low-high","high-low","high-high"),
        fill=colors,bty="n")
 ```
+We can now observe, which clusters are of high and which of low values. North areas of Kensington border with areas of low values, while some of the Chelsea's areas border with high values, even though these are in the center of Chelsea. We can conclude, that the data is significantly clustered in means of employment.
+
 
 ## GETIS-ORD
 
+We can also check whether the Getis-Ord Gi statistic can help us with our analysis. Thanks to that we can broaden our analysis with proximity based neighbours instead of border based.
+
+We set the proximity to 1000 and observe hot-spots on the map below:
 ```{r getis_ord, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 
 # -------------------  GETIS-ORD ------------------- 
 
 # creates centroid and joins neighbours within 0 and x units
-nb <- dnearneigh(coordinates(OA.Census),0,800)
+nb <- dnearneigh(coordinates(OA.Census),0,1000)
 nb_lw <- nb2listw(nb, style = 'B')
 
 
@@ -290,6 +310,11 @@ names(local_g)[58] <- "gstat"
 tm_shape(local_g) + tm_fill("gstat", palette = "RdBu", style = "pretty") +
   tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 ```
+We can clearly see that there are three main cluster:
+- of low values in the north
+- of high values in the center
+- of slightly high values in the south
+
 
 ## Linear model - employed
 Using backward variables selection we eliminated most of the insignificant variables and came up with following model:

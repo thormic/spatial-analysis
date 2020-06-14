@@ -292,7 +292,7 @@ We can now observe, which clusters are of high and which of low values. North ar
 
 We can also check whether the Getis-Ord Gi statistic can help us with our analysis. Thanks to that we can broaden our analysis with proximity based neighbours instead of border based.
 
-We set the proximity to 1000 and observe hot-spots on the map below:
+We set the proximity to 1000 and observe hot-spots based on intenisty of clusters, on the map below:
 ```{r getis_ord, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 
 # -------------------  GETIS-ORD ------------------- 
@@ -315,8 +315,12 @@ We can clearly see that there are three main cluster:
 - of high values in the center
 - of slightly high values in the south
 
+Let's see if we can infer more from regression models and explain the employed indicator.
 
 ## Linear model - employed
+
+We will start with OLS model.
+
 Using backward variables selection we eliminated most of the insignificant variables and came up with following model:
 ```{r linear_model, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 
@@ -329,7 +333,9 @@ summary(model_sig_2)
 par(mfrow=c(2,2))
 plot(model_sig_2)
 ```
+We obtain almost ideally fitted model, with R-squared = 0.99. It means that the variables that we chose explain it very accurately. We can further explore the coefficients, all of them are positive, however qualifications level is the strongest one. Indicator that people lives alone being the weakest. We can also observe that both white and black races impact the employed indicator in almost the same way.
 
+Let's see if residuals vary among different OAs.
 
 ```{r linear_model_resids, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 resids<-residuals(model_sig_2)
@@ -339,14 +345,19 @@ names(map.resids)[58] <- "resids"
 tm_shape(map.resids) + tm_fill("resids", palette="Blues") + tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 ```
 
+There are no significant patterns, so we may expect that there are no variables that are unobserved in our analysis. However, spatial analysis using GWR may bring more information.
+
 ## GWR - employed
+
+We start with calculating kernel bandwith for GWR computation.
+```{r gwr_adapt, include=False}
+#calculate kernel bandwidth
+GWRbandwidth <- gwr.sel(OA.Census$employed ~ .-1, data = OA.Census[,sig_cols_2], adapt =TRUE)
+```
+
 ```{r gwr, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 
 # ------------------- GWR ------------------- 
-
-#calculate kernel bandwidth
-GWRbandwidth <- gwr.sel(OA.Census$employed ~ .-1, data = OA.Census[,sig_cols_2], adapt =TRUE)
-
 
 gwr.model = gwr(OA.Census$employed ~ .-1,
                 data = OA.Census[,sig_cols_2], adapt=GWRbandwidth, hatmatrix=TRUE, se.fit=TRUE)
@@ -354,13 +365,20 @@ gwr.model = gwr(OA.Census$employed ~ .-1,
 gwr.model
 ```
 
-```{r gwr_results, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+R-squared seemed to be much lower, let's see how it looks divided among the areas. 
+
+```{r gwr_r2local, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 results <-as.data.frame(gwr.model$SDF)
 gwr.map <- cbind(OA.Census[,sig_cols_2], as.matrix(results))
 
 tm_shape(gwr.map) + tm_fill("localR2", palette="PuBuGn")+ tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 # qtm(gwr.map, fill = "localR2", palette="PuBuGn")
+```
 
+It seems that the model is best fitted to the areas in the north, where the local R-squared is the highest.
+
+However, as in the linear model, all coefficients are positive. We can further explore them divided among OAs.
+```{r gwr_results, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 # create tmap objects
 map1 <- tm_shape(gwr.map) + tm_fill("white", n = 5, style = "quantile", palette="Blues",
                                     title = "white") +
@@ -416,9 +434,15 @@ print(map9, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
 print(map10, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
 
 ```
+Coefficients based on race turned out to impact north-center areas the most. Similarly with qualifications - south part, mainly Chelsea is impacted in almost the same way with lowest and highest qualifications.
 
+Let's see how the models will predict the aggregated by the OA, mean house prices.
 
 ## LINEAR MODEL - PRICES
+
+We will work through the same methodology as with the employed indicator.
+
+Using backward variables selection we eliminated most of the insignificant variables and came up with following model:
 
 ```{r linear_price, echo=FALSE, warning=FALSE}
 
@@ -430,6 +454,8 @@ summary(model_sig)
 
 ```
 
+On this target variable, the model is not that well-fitted, its R-squared equals to 0.399. It is interesting that the percentage of Jews impacts the average price the most postively, while having one car or no car the most negatively. The intercept estimates to over 6 million. Let's check the residuals on each of the OAs.
+
 ```{r linear_price_resids, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 # plot resids
 resids<-residuals(model_sig)
@@ -438,14 +464,21 @@ names(map.resids)[58] <- "resids"
 tm_shape(map.resids) + tm_fill("resids", palette="Blues") + tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 ```
 
-## GWR - PRICES
-```{r gwr_price, echo=FALSE, warning=FALSE}
+There are no patterns to the residuals, so we may conclude that we did not omit any significant variable in our modelling process.
 
-# ------------------- GWR - PRICE ------------------- 
+Maybe, GWR model will bring more value.
+
+## GWR - PRICES
+
+```{r gwr_band, echo=FALSE, warning=FALSE, include=FALSE}
 
 #calculate kernel bandwidth
 GWRbandwidth <- gwr.sel(OA.Census.mp$mean_price ~ ., data = OA.Census.mp[,sig_cols], adapt =TRUE)
+```
 
+```{r gwr_price, echo=FALSE, warning=FALSE}
+
+# ------------------- GWR - PRICE ------------------- 
 
 gwr.model = gwr(OA.Census.mp$mean_price ~ .,
                 data = OA.Census.mp[,sig_cols], adapt=GWRbandwidth, hatmatrix=TRUE, se.fit=TRUE)
@@ -454,11 +487,17 @@ gwr.model
 
 ```
 
-```{r gwr_price_results, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+This time, R-squared is higher than in the linear model - local R-squared can be observed on the plot below:
 
+```{r gwr_localr22, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 results <-as.data.frame(gwr.model$SDF)
 gwr.map <- cbind(OA.Census.mp[,sig_cols], as.matrix(results))
 tm_shape(gwr.map) + tm_fill("localR2", palette="PuBuGn")+ tm_borders(alpha=.4) + tm_layout(frame = FALSE)
+```
+
+Let's further explore the results plotting each variable and its coefficients.
+
+```{r gwr_price_results, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 
 # create tmap objects
 map1 <- tm_shape(gwr.map) + tm_fill("single", n = 5, style = "quantile", palette="Greens",
@@ -566,7 +605,8 @@ print(map18, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
 print(map19, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
 print(map20, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
 ```
-
+- Having one car or not having a car at all impacts north areas in the same way. 
+- 
 
 ## Interpolation
 

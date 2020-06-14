@@ -17,14 +17,10 @@ houses_merged <-  censusData %>%
 # Load spatial files for Kensington and Chelsea
 Output.Areas <- readOGR("data/statistical-gis-boundaries-london/ESRI", "OA_2011_London_gen_MHW")
 Output.Areas <- Output.Areas[Output.Areas$LAD11NM=="Kensington and Chelsea",]
-plot(Output.Areas)
 
 # Combine variables with prices
 OA.Census <- merge(Output.Areas, censusData, by.y ="OA", by.x="OA11CD")
 proj4string(OA.Census) <- CRS("+init=EPSG:27700")
-
-tm_shape(OA.Census) + tm_fill("employed", palette = "Blues", style = "quantile",
-                              title = "% employed") + tm_borders(alpha=.4)
 
 OA.Census.mp <- merge(Output.Areas, houses_merged, by.y ="OA", by.x="OA11CD", all = FALSE)
 proj4string(OA.Census.mp) <- CRS("+init=EPSG:27700")
@@ -259,8 +255,6 @@ qtm(map.resids, fill = "resids")
 
 
 # ------------------- GWR - PRICE ------------------- 
-
-
 
 #calculate kernel bandwidth
 GWRbandwidth <- gwr.sel(OA.Census.mp$mean_price ~ ., data = OA.Census.mp[,sig_cols], adapt =TRUE)

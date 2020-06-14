@@ -18,12 +18,14 @@ list.of.packages <- c("ggplot2",
                       "maptools",
                       "gstat",
                       "xts",
-                      "rgl",
+                      # "rgl",
                       "automap",
-                      "olsrr"
+                      "olsrr",
+                      "tidyverse",
+                      "corrplot"
                       )
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
+if(length(new.packages)) install.packages(new.packages, repos = "http://cran.us.r-project.org")
 
 
 library(ggplot2)
@@ -46,6 +48,8 @@ library(spatstat)
 library(maptools)
 library(gstat)
 library(xts)
-library(rgl)
+# library(rgl)
 library(automap)
 library(olsrr)
+library(tidyverse)
+library(corrplot)

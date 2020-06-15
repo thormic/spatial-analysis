@@ -11,7 +11,7 @@ output: html_document
 source("load_libraries.R")
 ```
 
-# Spatial analysis of Kensington and Chelsea district in London (on OA level) - including house prices.
+# Spatial analysis of Kensington and Chelsea district in London (on Output Areas [OA] level) - including house prices.
 
 ## Short decription:
 In this project we conducted spatial analysis of Kensington and Chelsea district (later referred to as K&D) in London. We used data from:
@@ -20,12 +20,21 @@ In this project we conducted spatial analysis of Kensington and Chelsea district
 - [HM Land Registry](https://landregistry.data.gov.uk/app/ppd/)
 -- We used data for house sales made in Kensington and Chelsea district in 2011
 
+
 ## Context
+We chose Kensington and Chelsea district for our analysis because we thought it is one of the most "mixed" districts in London. It is the smallest borough in London and the second smallest district in England; it is one of the most densely populated administrative regions in the United Kingdom. It also includes affluent areas such as Notting Hill, Kensington, South Kensington, Chelsea, and Knightsbridge. The fact that it contains many of the most expensive residential properties in the world may show some distinct social inequalities. At the 2011 census, the borough had a population of 158,649 who were 71% White, 10% Asian, 5% of multiple ethnic groups, 4% Black African and 3% Black Caribbean. A 2017 study by Trust for London and the New Policy Institute found that Kensington & Chelsea has the greatest income inequality of any London Borough. Private rent for low earners was also found to be the least affordable in London. However, the borough's poverty rate of 28% is roughly in line with the London-wide average.
+
+All these factors convinced us that more in-depth analysis of that district might result in some insightful outcomes.
+
 
 ## Hypothesis
+In furhter analysis we decided to verify 2 major hypotheses:
+- immigrants, people of other race than white and people of other religion than christian tend to cluster into their own OAs, completly separate from regions that are mostly-white, rather rich and full of highly-educated citizens (which are less concentrated and there is no marked boundary)
+- mean of house prices in OAs is affected by socio-economic structure of this particular and neighbouring OAs
 
 
-## Loading the data:
+
+## Loading the data
 First, let us load the previously prepared data:
 ```{r load_data, echo=TRUE}
 
@@ -124,7 +133,7 @@ corrplot(M, type="upper", order="hclust",
 ```
 Variables that we expected to be correlated with each other matched the expectations. Most of the non-white non-native OA's are also the ones with most social rented flats, biggest unemployment rate and with lowest qualification.
 
-
+Now we will explore how percentages of citizens with highest qualification, of black/african or white race distribute among OAs. All plots are interactive, so we can analyze it also with reference to the geographical location.
 ```{r var_maps, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
 
 # Maps with filling 
@@ -136,14 +145,24 @@ tm_shape(OA.Census) + tm_fill("highest_quali", palette = "Purples", style = "qua
 tm_shape(OA.Census) + tm_fill("black_african", palette = "YlGn", style = "quantile",
                               title = "% of Black/African") + tm_borders(alpha=.4)
 
-tm_shape(OA.Census) + tm_fill("white", palette = "GnBu", style = "quantile",
+tm_shape(OA.Census) + tm_fill("muslim", palette = "GnBu", style = "quantile",
                               title = "% of Muslim") + tm_borders(alpha=.4)
-```
 
+tm_shape(OA.Census) + tm_fill("white", palette = "PuBu", style = "quantile",
+                              title = "% of White") + tm_borders(alpha=.4)
+
+tm_shape(OA.Census) + tm_fill("united_kingdom", palette = "PuBu", style = "quantile",
+                              title = "% of born in UK") + tm_borders(alpha=.4)
+```
+As we previously expected - OAs with highest densities of black/africans are also packed with people of muslim faith. On the contrary, areas with mostly white people are also the ones with highest rate of highly qualified citizens. We can also see that OAs in north of the district (North Kensington mostly) are visibly apart from the center and south (Chelsea) which is mostly occupied by natives.
+
+However, what is truly remarkable, OAs with most people born in UK are also the ones having the most of the black/african people. So where do these highly qualified white people residing in south come from?
+
+Let us explore how prices of houses in K&D compare with distribution of citizens that were born in EU countries:
 ```{r price_var_maps, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
 
 # Plot maps with house prices and variables
-tm_shape(OA.Census) + tm_fill("white", palette = "Greens",
+tm_shape(OA.Census) + tm_fill("other_eu", palette = "Greens",
                               style = "quantile", title = "% Whites") +
   tm_borders(alpha=.4) +
   tm_shape(House.Points) + tm_bubbles(col = "price_paid", size = 0.2,
@@ -167,6 +186,8 @@ tm_shape(OA.Census) + tm_fill("unemployed", palette = "Oranges",
   tm_layout(legend.text.size = 0.8, legend.title.size = 1.1, frame = FALSE)
 
 ```
+So, there is the answer - those mostly-white OAs with high rate of qualification are the areas occupied mostly by EU born citizens. Prices in these areas are also much higher. We added distribution of unemployment - both to show that it overlaps with the previous north areas and it is negatively correlated with prices. We expect that there might not be direct cause and effect - it is probably more of a vicious cycle.
+
 
 ```{r load_kernels, echo=FALSE, warning=FALSE, message=FALSE}
 

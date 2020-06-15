@@ -511,6 +511,7 @@ results <-as.data.frame(gwr.model$SDF)
 gwr.map <- cbind(OA.Census.mp[,sig_cols], as.matrix(results))
 tm_shape(gwr.map) + tm_fill("localR2", palette="PuBuGn")+ tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 ```
+This time, GWR clearly fits better on north-west part and gradually lowers the quality of fit further going east.
 
 Let's further explore the results plotting each variable and its coefficients.
 
@@ -581,6 +582,14 @@ map20 <- tm_shape(gwr.map) + tm_fill("highest_quali.1", n = 5, style = "quantile
   tm_layout(frame = FALSE)
 
 
+# --- THIRD 2 VARIABLES
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(map9, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
+print(map10, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
+print(map11, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
+print(map12, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
+
 # --- FIRST 2 VARIABLES
 grid.newpage()
 pushViewport(viewport(layout=grid.layout(2,2)))
@@ -596,15 +605,6 @@ print(map5, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
 print(map6, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
 print(map7, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
 print(map8, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
-
-
-# --- THIRD 2 VARIABLES
-grid.newpage()
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(map9, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
-print(map10, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
-print(map11, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
-print(map12, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
 
 # --- FOURTH 2 VARIABLES
 grid.newpage()
@@ -622,10 +622,17 @@ print(map18, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
 print(map19, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
 print(map20, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
 ```
-- Having one car or not having a car at all impacts north areas in the same way. 
-- 
+- Having one car or not having a car at all impacts north areas in almost the same way. 
+- Density of Jews in the south clearly reproduced in its coefficients values that emphasize prices on the south area.
+- On the other hand, OAs with higher denisty of Asians in the north will be negatively impacted the most, similar to single people density.
+- The more Muslims in the center of Chelsea the lower the house prices, similar to density of people in the age between 30 and 44.
+- Density of private rent in the south positively impacts the price.
+- It is interesting that in the north, highest qualifications impact the price more than in the center and south.
+
 
 ## Interpolation
+
+We are now going to try different technique, called interpolation. We will first need to create Thiessen polygons, that actually creates areas similar to our OAs, by assigning boundaries to the closest housing point. We then clip those boundaries to the area of Kensington and Chelsea and finally plot them on the map, filling the areas with price levels.
 
 ```{r interpolation, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 
@@ -651,6 +658,8 @@ tm_shape(thiessen.crop) + tm_fill(col = "price_paid", style = "quantile", palett
   tm_layout(legend.position = c("left", "bottom"), legend.text.size = 1.05,
             legend.title.size = 1.2, frame = FALSE)
 ```
+
+
 
 ## Inverse distance weighting
 

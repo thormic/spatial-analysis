@@ -19,6 +19,7 @@ In this project we conducted spatial analysis of Kensington and Chelsea district
 -- We used data from 2011 Census on OA level (lowest division). All the data was downloaded in percentages
 - [HM Land Registry](https://landregistry.data.gov.uk/app/ppd/)
 -- We used data for house sales made in Kensington and Chelsea district in 2011
+- [Helpful code snippets](https://data.cdrc.ac.uk/dataset/introduction-spatial-data-analysis-and-visualisation-r/resource/practical-5-making-maps-r)
 
 
 ## Context
@@ -453,11 +454,11 @@ print(map10, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
 ```
 Coefficients based on race turned out to impact north-center areas the most. Similarly with qualifications - south part, mainly Chelsea is impacted in almost the same way with lowest and highest qualifications.
 
-Let's see how the models will predict the aggregated by the OA, mean house prices.
+Let's see how the models will predict the mean house prices aggregated by the OA.
 
 ## LINEAR MODEL - PRICES
 
-We will work through the same methodology as with the employed indicator.
+We will work through the same methodology as with the employment rate.
 
 Using backward variables selection we eliminated most of the insignificant variables and came up with following model:
 
@@ -474,7 +475,7 @@ summary(model_sig)
 On this target variable, the model is not that well-fitted, its R-squared equals to 0.399. It is interesting that the percentage of Jews impacts the average price the most postively, while having one car or no car the most negatively. The intercept estimates to over 6 million. Let's check the residuals on each of the OAs.
 
 ```{r linear_price_resids, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
-# plot resids
+
 resids<-residuals(model_sig)
 map.resids <- cbind(OA.Census.mp, resids)
 names(map.resids)[58] <- "resids"
@@ -483,13 +484,12 @@ tm_shape(map.resids) + tm_fill("resids", palette="Blues") + tm_borders(alpha=.4)
 
 There are no patterns to the residuals, so we may conclude that we did not omit any significant variable in our modelling process.
 
-Maybe, GWR model will bring more value.
+Maybe GWR model will bring more value.
 
 ## GWR - PRICES
 
 ```{r gwr_band, echo=FALSE, warning=FALSE, include=FALSE}
 
-#calculate kernel bandwidth
 GWRbandwidth <- gwr.sel(OA.Census.mp$mean_price ~ ., data = OA.Census.mp[,sig_cols], adapt =TRUE)
 ```
 
@@ -499,7 +499,6 @@ GWRbandwidth <- gwr.sel(OA.Census.mp$mean_price ~ ., data = OA.Census.mp[,sig_co
 
 gwr.model = gwr(OA.Census.mp$mean_price ~ .,
                 data = OA.Census.mp[,sig_cols], adapt=GWRbandwidth, hatmatrix=TRUE, se.fit=TRUE)
-#print the results of the model
 gwr.model
 
 ```
@@ -511,7 +510,7 @@ results <-as.data.frame(gwr.model$SDF)
 gwr.map <- cbind(OA.Census.mp[,sig_cols], as.matrix(results))
 tm_shape(gwr.map) + tm_fill("localR2", palette="PuBuGn")+ tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 ```
-This time, GWR clearly fits better on north-west part and gradually lowers the quality of fit further going east.
+GWR clearly fits north-west part better and gradually lowers the quality of fit going further east.
 
 Let's further explore the results plotting each variable and its coefficients.
 
@@ -624,7 +623,7 @@ print(map20, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
 ```
 - Having one car or not having a car at all impacts north areas in almost the same way. 
 - Density of Jews in the south clearly reproduced in its coefficients values that emphasize prices on the south area.
-- On the other hand, OAs with higher denisty of Asians in the north will be negatively impacted the most, similar to single people density.
+- On the other hand, OAs in the north with higher density of Asians will be mostly negatively impacted, similar to single people density.
 - The more Muslims in the center of Chelsea the lower the house prices, similar to density of people in the age between 30 and 44.
 - Density of private rent in the south positively impacts the price.
 - It is interesting that in the north, highest qualifications impact the price more than in the center and south.
@@ -632,25 +631,23 @@ print(map20, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
 
 ## Interpolation
 
-We are now going to try different technique, called interpolation. We will first need to create Thiessen polygons, that actually creates areas similar to our OAs, by assigning boundaries to the closest housing point. We then clip those boundaries to the area of Kensington and Chelsea and finally plot them on the map, filling the areas with price levels.
+We are now going to try different technique, called interpolation. Because we lack data in some of the OAs, we will use this method to "fill in the gaps". For the first method we will need to create Thiessen polygons, that actually creates areas similar to our OAs, by assigning boundaries to the closest housing point. We then clip those boundaries to the area of Kensington and Chelsea and finally plot them on the map, filling the areas with price levels.
 
 ```{r interpolation, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
 
 # ------------------- Interpolation ------------------- 
 
-# Create a tessellated surface
 dat.pp <- as(dirichlet(as.ppp(House.Points)), "SpatialPolygons")
 dat.pp <- as(dat.pp,"SpatialPolygons")
-# Sets the projection to British National Grid
+
 proj4string(dat.pp) <- CRS("+init=EPSG:27700")
 proj4string(House.Points) <- CRS("+init=EPSG:27700")
-# Assign to each polygon the data from House.Points
+
 int.Z <- over(dat.pp,House.Points, fn=mean)
-# Create a SpatialPolygonsDataFrame
+
 thiessen <- SpatialPolygonsDataFrame(dat.pp, int.Z)
 thiessen.crop <-crop(thiessen, Output.Areas)
 
-# maps house prices across thiessen polygons
 tm_shape(thiessen.crop) + tm_fill(col = "price_paid", style = "quantile", palette = "Blues",
                                   title = "Price Paid (£)") +
   tm_borders(alpha=.3, col = "black") +
@@ -658,18 +655,17 @@ tm_shape(thiessen.crop) + tm_fill(col = "price_paid", style = "quantile", palett
   tm_layout(legend.position = c("left", "bottom"), legend.text.size = 1.05,
             legend.title.size = 1.2, frame = FALSE)
 ```
+Looking at the arrangement of polygons we can determine that there are indeed groups of neighbours on south and center-west while the polygons in the north are much more apart. Of course considering the data we used for 2011.
 
 
+## Inverse Distance Weighting (IDW)
 
-## Inverse distance weighting
-
+Next, we will use IDW. We will convert point data of house prices to numerical values spread over continous surface - mostly for easier and more approachable visualisations how the data is distributed across space. This is also a method of interpolation - just different to usage of Thiessen polygons.
 ```{r idw, echo=FALSE, warning=FALSE}
 
 # ------------------- Inverse distance weighting ------------------- 
 
-# define sample grid based on the extent of the House.Points file
-grid <-spsample(House.Points, type = 'regular', n = 10000)
-# runs the idw for the Price variable of House.Points
+grid <-spsample(House.Points, type = 'regular', n = 20000)
 idw <- idw(House.Points$price_paid ~ 1, House.Points, newdata= grid)
 
 idw.output = as.data.frame(idw)
@@ -678,15 +674,12 @@ names(idw.output)[1:3] <- c("long", "lat", "prediction")
 
 spg <- idw.output
 coordinates(spg) <- ~ long + lat
-# coerce to SpatialPixelsDataFrame
 gridded(spg) <- TRUE
-# coerce to raster
 raster_idw <- raster(spg)
-# sets projection to British National Grid
 projection(raster_idw) <- CRS("+init=EPSG:27700")
-# we can quickly plot the raster to check its okay
 # plot(raster_idw)
 ```
+
 
 ## 3D PLOTTING
 ```{r 3dplots, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8, message=FALSE}
@@ -709,11 +702,13 @@ tm_shape(masked_idw) + tm_raster("prediction", style = "quantile", n = 100,
   tm_layout(legend.position = c("left", "bottom"), legend.text.size = 1.1,
             legend.title.size = 1.4, frame = FALSE)
 ```
+3D visualisation (especially the interactive version - which cannot be seen in Markdown, but code for it is provided) further reassure our previous remarks.
+
 
 ## Geostatistical interpolation
 ```{r geo_interpolation, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
 # ------------------- Geostatistical interpolation ------------------- 
-grid <-spsample(House.Points, type = 'regular', n = 10000)
+grid <-spsample(House.Points, type = 'regular', n = 20000)
 # runs the kriging
 kriging_result = autoKrige(log(price_paid)~1, House.Points, grid)
 ```
@@ -725,6 +720,12 @@ plot(kriging_result)
 
 ## Conclusion
 
-We concluded that there might be more of a wealth division rather than racial - although there are areas in which black/african people constitute for larger percentage of citizens, these are the same areas which have majority of native British citizens. However - there are very distinct areas which are dominated by people from EU with the highest qualifications therefore effecting in lowest unemployment rates. 
-Immigrants, people of other race than white and people of other religion than christian tend to cluster into their own OAs, completly separate from regions that are mostly-white, rather rich and full of highly-educated citizens (which are less concentrated and there is no marked boundary)
+There were some inisights that we did not expect to come upon.
+For example, we concluded that there might be more of a wealth division rather than racial - although there are areas in which black/african people constitute for larger percentage of citizens, these are the same areas which have majority of native British citizens. However - there are very distinct areas which are dominated by people from EU with the highest qualifications therefore effecting in lowest unemployment rates.
+Moreover, immigrants, people of other race than white and people of other religion than christian tend to cluster into their own OAs, completly separate from regions that are populated mostly by white, rather rich and full of highly-educated citizens (which are less concentrated and there is no marked boundary)
 
+Considering our hypotheses though, we confirmed that demographic factors do indeed affect employment rate in given OAs - however during the analysis the addition of spatially lagged variables did not improve the predicitive ability of the models.
+However, mean prices of houses in the OAs are dependant on spatial factors as well as variables from the same OA - GWR model introduced improved results comparing to simple linear regression.
+
+We acknowledge shortcomings of our work - for example we only analyzed prices of actually SOLD houses. That is however the only data accessible in a well structured format - we would analyze prices of listed houses but that would require a lot of scrapping from sources we are not familiar with.
+Of course, we would like to also include other districts in our research - maybe compare less diverse than K&D and see whether there are major differences in e.g. house price patterns.

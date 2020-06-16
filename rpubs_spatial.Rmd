@@ -1,43 +1,82 @@
 ---
-title: "Spatial analysis of Kensington and Chelsea district in London (on OA level) - including house prices."
+title: "Spatial analysis of Kensington and Chelsea"
+subtitle: 'Extensive analysis of K&C district in London (on Output Areas [OA] level) - including house prices.'
 author: "Bartlomiej Kowalczuk & Michal Thor"
 date: "13 06 2020"
 output: html_document
+framework: bootstrap
+highlighter: prettify
+hitheme: twitter-bootstrap
+assets:
+  css:
+   - "http://fonts.googleapis.com/css?family=Raleway:300"
+   - "http://fonts.googleapis.com/css?family=Oxygen"
 ---
+  
+  <style>
+  body{
+    font-family: 'Oxygen', sans-serif;
+    font-size: 16px;
+    line-height: 24px;
+  }
 
+h1,h2,h3,h4 {
+  font-family: 'Raleway', sans-serif;
+}
 
+.container { width: 1000px; }
+h2 {
+  background-color: #D4DAEC;
+    text-indent: 40px; 
+}
+
+g-table-intro h4 {
+  text-indent: 0px;
+}
+</style>
+  
+<a href="https://github.com/thormic/spatial-analysis" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+  
+  
+  
 ```{r setup, include=FALSE}
 
 source("load_libraries.R")
 ```
 
-# Spatial analysis of Kensington and Chelsea district in London (on Output Areas [OA] level) - including house prices.
+## Short description:
+In this project we conducted spatial analysis of Kensington and Chelsea district (later referred to as K&C) in London. We used data from:
 
-## Short decription:
-In this project we conducted spatial analysis of Kensington and Chelsea district (later referred to as K&D) in London. We used data from:
-- [Nomis site](https://www.nomisweb.co.uk/query/select/getdatasetbytheme.asp?opt=3&theme=&subgrp=)
--- We used data from 2011 Census on OA level (lowest division). All the data was downloaded in percentages
-- [HM Land Registry](https://landregistry.data.gov.uk/app/ppd/)
--- We used data for house sales made in Kensington and Chelsea district in 2011
-- [Helpful code snippets](https://data.cdrc.ac.uk/dataset/introduction-spatial-data-analysis-and-visualisation-r/resource/practical-5-making-maps-r)
+* [Nomis site](https://www.nomisweb.co.uk/query/select/getdatasetbytheme.asp?opt=3&theme=&subgrp=)
+    + We used data from 2011 Census on OA level (lowest division). All the data was downloaded in percentages
+    
+* [HM Land Registry](https://landregistry.data.gov.uk/app/ppd/)
+    + We used data for house sales made in Kensington and Chelsea district in 2011
+    
+* [Helpful code snippets](https://data.cdrc.ac.uk/dataset/introduction-spatial-data-analysis-and-visualisation-r/resource/practical-5-making-maps-r)
 
+***
 
 ## Context
-We chose Kensington and Chelsea district for our analysis because we thought it is one of the most "mixed" districts in London. It is the smallest borough in London and the second smallest district in England; it is one of the most densely populated administrative regions in the United Kingdom. It also includes affluent areas such as Notting Hill, Kensington, South Kensington, Chelsea, and Knightsbridge. The fact that it contains many of the most expensive residential properties in the world may show some distinct social inequalities. At the 2011 census, the borough had a population of 158,649 who were 71% White, 10% Asian, 5% of multiple ethnic groups, 4% Black African and 3% Black Caribbean. A 2017 study by Trust for London and the New Policy Institute found that Kensington & Chelsea has the greatest income inequality of any London Borough. Private rent for low earners was also found to be the least affordable in London. However, the borough's poverty rate of 28% is roughly in line with the London-wide average.
+We chose Kensington and Chelsea district of London for our analysis because we thought it is one of the most "mixed" districts in this city. It is the smallest borough in London and the second smallest district in England; it is one of the most densely populated administrative regions in the United Kingdom. It also includes affluent areas such as Notting Hill, Kensington, South Kensington, Chelsea, and Knightsbridge. The fact that it contains many of the most expensive residential properties in the world may show some distinct social inequalities. At the 2011 census, the borough had a population of 158,649 who were 71% White, 10% Asian, 5% of multiple ethnic groups, 4% Black African and 3% Black Caribbean. A 2017 study by Trust for London and the New Policy Institute found that Kensington & Chelsea has the greatest income inequality of any London Borough. Private rent for low earners was also found to be the least affordable in London. However, the borough's poverty rate of 28% is roughly in line with the London-wide average.
 
 All these factors convinced us that more in-depth analysis of that district might result in some insightful outcomes.
 
+***
 
 ## Hypothesis
 In further analysis we decided to verify 2 major hypotheses:
-- Employed indicator does differ among different groups of OAs. We can explain it by using demographic factors both from this OA and from neighbouring ones using spatially lagged variables.
-- Mean of house prices in OAs is affected by its' socio-economic structure as well as neighbouring OAs - introducing Geographically Weighted Regression improves the prediction accuracy.
 
+* Employed indicator does differ among different groups of OAs. We can explain it by using demographic factors both from this OA and from neighbouring ones using spatially lagged variables.
 
+* Mean of house prices in OAs is affected by its' socio-economic structure as well as neighbouring OAs - introducing Geographically Weighted Regression improves the prediction accuracy.
+
+***
 
 ## Loading the data
 First, let us load the previously prepared data:
-```{r load_data, echo=TRUE}
+
+```{r load_data, echo=TRUE, warning=FALSE, message=FALSE}
 
 Census.Data <- read.csv("census_data.csv")
 houseData <- read.csv("house_data.csv")
@@ -64,9 +103,13 @@ OA.Census.mp <- merge(Output.Areas, houses_merged, by.y ="OA", by.x="OA11CD", al
 proj4string(OA.Census.mp) <- CRS("+init=EPSG:27700")
 ```
 
+
+***
+
 ## Exploratory Data Analysis:
 
 We use histograms to explore denisty of each variable, take a brief look into how the dataset looks like and check for any potential model variables in the further analysis.
+
 ```{r histograms, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
 
 ggplot(hist_df) +
@@ -80,7 +123,8 @@ dev.off()
 ```
 
 Now, let's check distribution of percentages across all OA's of religion-based variables, race-based and certain chosen variables.
-```{r boxplot1, echo = FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
+<br>
+```{r boxplot1, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 
 boxplot(Census.Data$christian, Census.Data$muslim, Census.Data$jewish,
         Census.Data$no_religion, ylim=c(0,100),
@@ -88,16 +132,20 @@ boxplot(Census.Data$christian, Census.Data$muslim, Census.Data$jewish,
         names=c("Christian", "Muslim", "Jewish", "No religion"),
         main = "Distribution of religions per OA")
 ```
-We can see that the majority of inhabitants of K&D are christian - however there are many outliers in muslim religion meaning that there could be heavy muslim-biased OA districts in K&D.
-```{r boxplot2, echo = FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
+<br>
+We can see that the majority of inhabitants of K&C are christian - however there are many outliers in muslim religion meaning that there could be heavy muslim-biased OA districts in K&C.
+
+```{r boxplot2, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 boxplot(Census.Data$white, Census.Data$black_african, Census.Data$asian,
         Census.Data$other_arab, ylim=c(0,100),
         col = "dodgerblue", rectCol="dodgerblue3", colMed="dodgerblue4",
         names=c("White people", "Black/African", "Asian", "Other/Arabs"),
         main = "Distribution of race per OA")
 ```
+<br>
 Once again, there is one overwhelming group - white people, but there are few outliers in every religion, therefore meaning again that we might have some districts that would greatly differ from the rest.
-```{r boxplot3, echo = FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
+
+```{r boxplot3, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 boxplot(Census.Data$employed, Census.Data$unemployed, Census.Data$kids_english, Census.Data$male, Census.Data$white,
         Census.Data$Age_30_44, Census.Data$married, Census.Data$owned,  ylim=c(0,100),
         col = "dodgerblue", rectCol="dodgerblue3", colMed="dodgerblue4",
@@ -105,10 +153,12 @@ boxplot(Census.Data$employed, Census.Data$unemployed, Census.Data$kids_english, 
         main = "Distribution of certain variables per OA")
 
 ```
-Finally, looking at the distribution of chosen variables, we can see that there are for example OA's with very low employment rate or rather high percentage of families where only children under age of 6 have English as their primiary language, so we expect (considering previous two boxplots) that whole K&D might be divised into wealthy areas, poor areas, areas mostly occupied by immigrants and religious based areas. That is a good starting point for further spatial analysis.
+<br>
+Finally, looking at the distribution of chosen variables, we can see that there are for example OA's with very low employment rate or rather high percentage of families where only children under age of 6 have English as their primiary language, so we expect (considering previous two boxplots) that whole K&C might be divised into wealthy areas, poor areas, areas mostly occupied by immigrants and religious based areas. That is a good starting point for further spatial analysis.
 
 Now let us explore dependencies between some variables that we would expect to be somehow correlated. We can see that on scatterplots below:
-```{r scatterplots, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
+  
+```{r scatterplots, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5, fig.width=8}
 
 # Scatterplots with regression line
 
@@ -119,11 +169,13 @@ p2 <- ggplot(Census.Data, aes(highest_quali, employed))
 p2 + geom_point(aes(colour = white, size = other_eu))
 
 ```
+<br>
 Looking at the first one we can see that there is a negative correlation between percentage of highest qualification within OA and the unemployment rate. Additionally OA's with more black/african people and of muslim faith are mostly the ones with highest unemployment rate. That indicates that there might be a problem in employment opportunities and education for immigrants. 
 
 On the second one the correlation between being employment rate and percentage of inhabitants with highest qualification is rather positive. However, what is interesting is that OA's with the most qualified and highest employment rate are also the ones with the most white people from european countries other than United Kingdom. That might raise suspicion, that there might be racial problem for immigrants - it is far easier for you to get education and employment if you are white. One would argue that many students from across Europe aspire to study/work in London, so this might also create the bias. However this thesis is not supported by gathered data.
 
-Correlation plot:
+**Correlation plot:**
+  
 ```{r correlation, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
 
 # Correlation plot
@@ -132,10 +184,17 @@ M<-cor(Census.Data[,-1])
 corrplot(M, type="upper", order="hclust",
          col=brewer.pal(n=8, name="RdYlBu"))
 ```
+<br>
 Variables that we expected to be correlated with each other matched the expectations. Most of the non-white non-native OA's are also the ones with most social rented flats, biggest unemployment rate and with lowest qualification.
 
+
+***
+
+## Spatial visualisations
+
 Now we will explore how percentages of citizens with highest qualification, of black/african or white race distribute among OAs. All plots are interactive, so we can analyze it also with reference to the geographical location.
-```{r var_maps, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
+
+```{r var_maps, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 
 # Maps with filling 
 tmap_mode("view")
@@ -152,20 +211,22 @@ tm_shape(OA.Census) + tm_fill("muslim", palette = "GnBu", style = "quantile",
 tm_shape(OA.Census) + tm_fill("white", palette = "PuBu", style = "quantile",
                               title = "% of White") + tm_borders(alpha=.4)
 
-tm_shape(OA.Census) + tm_fill("united_kingdom", palette = "PuBu", style = "quantile",
+tm_shape(OA.Census) + tm_fill("united_kingdom", palette = "BuGn", style = "quantile",
                               title = "% of born in UK") + tm_borders(alpha=.4)
 ```
+<br>
 As we previously expected - OAs with highest densities of black/africans are also packed with people of muslim faith. On the contrary, areas with mostly white people are also the ones with highest rate of highly qualified citizens. We can also see that OAs in north of the district (North Kensington mostly) are visibly apart from the center and south (Chelsea) which is mostly occupied by natives.
 
 However, what is truly remarkable, OAs with most people born in UK are also the ones having the most of the black/african people. So where do these highly qualified white people residing in south come from?
 
 
-Let us explore how prices of houses in K&D compare with distribution of citizens that were born in EU countries:
-```{r price_var_maps, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
+Let us explore how prices of houses in K&C compare with distribution of citizens that were born in EU countries:
+<br>
+```{r price_var_maps, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 
 # Plot maps with house prices and variables
 tm_shape(OA.Census) + tm_fill("other_eu", palette = "Greens",
-                              style = "quantile", title = "% Whites") +
+                              style = "quantile", title = "% of citizens born in EU") +
   tm_borders(alpha=.4) +
   tm_shape(House.Points) + tm_bubbles(col = "price_paid", size = 0.2,
                                       palette = "Blues", style = "quantile",
@@ -188,6 +249,7 @@ tm_shape(OA.Census) + tm_fill("unemployed", palette = "Oranges",
   tm_layout(legend.text.size = 0.8, legend.title.size = 1.1, frame = FALSE)
 
 ```
+<br>
 So, there is the answer - those mostly-white OAs with high rate of qualification are the areas occupied mostly by EU born citizens. Prices in these areas are also much higher. We added distribution of unemployment - both to show that it overlaps with the previous north areas and it is negatively correlated with prices. We expect that there might not be direct cause and effect - it is probably more of a vicious cycle.
 
 
@@ -201,9 +263,9 @@ bounding_box <- bbox(Output.Areas)
 masked_kde <- mask(kde, Output.Areas)
 ```
 
-```{r kernel_density, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
+```{r kernel_density, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5, fig.width=8}
 
-tm_shape(masked_kde, bbox = bounding_box) + tm_raster("ud", style = "quantile",
+kernel1 <- tm_shape(masked_kde, bbox = bounding_box) + tm_raster("ud", style = "quantile",
                                                       n = 100,
                                                       legend.show = FALSE,
                                                       palette = "YlGnBu") +
@@ -214,7 +276,7 @@ range75 <- getverticeshr(kde.output, percent = 75)
 range50 <- getverticeshr(kde.output, percent = 50)
 range25 <- getverticeshr(kde.output, percent = 25)
 
-tm_shape(Output.Areas) + tm_fill(col = "#f0f0f0") + tm_borders(alpha=.8, col = "white") +
+kernel2 <- tm_shape(Output.Areas) + tm_fill(col = "#f0f0f0") + tm_borders(alpha=.8, col = "white") +
   tm_shape(House.Points) + tm_dots(col = "blue") +
   tm_shape(range75) + tm_borders(alpha=.7, col = "#fb6a4a", lwd = 2) +
 tm_fill(alpha=.1, col = "#fb6a4a") +
@@ -224,9 +286,18 @@ tm_fill(alpha=.1, col = "#fb6a4a") +
   tm_fill(alpha=.1, col = "#a50f15") +
   tm_layout(frame = FALSE)
 
-```
-From density plots we can see that houses in the "richest" OAs are also ares with most houses sold/highest rotation.
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(1,2)))
+print(kernel1, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
+print(kernel2, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
 
+```
+
+```{r reset_plots2, echo=FALSE, include=FALSE}
+dev.off()
+```
+<br>
+From density plots we can see that houses in the "richest" OAs are also ares with most houses sold/highest rotation of houses.
 
 ## Model part
 
@@ -234,31 +305,50 @@ In this part we are going to focus our study on the causes of the size of the em
 
 Firstly, we need to compute polygons for our dataset, which we are going to use in later parts of the study. Doing this in two different ways results in:
 
-```{r neighbours, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+```{r neighbours, echo=FALSE, warning=FALSE, fig.height=5, fig.width=8}
 
 # ------------------- Finding neighbours -------------------
 
 neighbours <- poly2nb(OA.Census)
 neighbours2 <- poly2nb(OA.Census, queen = FALSE)
 
+# plot(OA.Census, border = 'lightgrey')
+# plot(neighbours, coordinates(OA.Census), add=TRUE, col='blue')
+# plot(neighbours2, coordinates(OA.Census), add=TRUE, col='red')
+
+par(fig=c(0,0.5,0,1))
 plot(OA.Census, border = 'lightgrey')
 plot(neighbours, coordinates(OA.Census), add=TRUE, col='blue')
+
+par(fig=c(0.5,1,0,1), new=TRUE)
+plot(OA.Census, border = 'lightgrey')
 plot(neighbours2, coordinates(OA.Census), add=TRUE, col='red')
 ```
 
+```{r reset_plots3, echo=FALSE, include=FALSE}
+dev.off()
+```
+<br>
+Blue and red colored lines mean different methods - red ones are created using Rook's case neighbours and blue ones are just links to neighbouring OAs. Although the methods are different, differences can hardly be seen (both visually and numerically).
+
+***
+
 ## Global Spatial Autocorrelation
 
-Having the neighbours computed, we can ran Moran's test, which will result in correlation score for our employed variable.
+Having the neighbours computed, we can ran Moran's test, which will result in correlation score for our employment rate variable.
 
 Moran I Test:
+
 ```{r global_autocorr, echo=FALSE, warning=FALSE}
 
 # ------------------- Running a global spatial autocorrelation -------------------
 listw <- nb2listw(neighbours2)
 moran.test(OA.Census$employed, listw)
 ```
-
+<br>
 Employed indicator has 0.34 Moran's I statistic so it has a slight positive autocorrelation. Now, we have reasons to believe that the data does spatially cluster.
+
+***
 
 ## Local Spatial Autocorrelation
 
@@ -266,7 +356,7 @@ Analysis of the local spatial autocorrelation may result in broader conclusions.
 
 Below, you can observe local moran statistic on our map broken down by OA:
 
-```{r local_autocorr, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+```{r local_autocorr, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 
 # ------------------- Running a local spatial autocorrelation -------------------
 
@@ -277,15 +367,18 @@ moran.map <- cbind(OA.Census, local)
 tm_shape(moran.map) + tm_fill(col = "Ii", style = "quantile", palette = "GnBu", title = "local moran statistic") + tm_layout(frame = FALSE)
 
 ```
-
+<br>
 We can clearly see that there are indeed areas, which are surrounded by units with similar values - those with positive local moran statistic. This further confirms that the data spatially cluster. However, this map does not bring us specific information about those areas/clusters.
 
 To get the insights of each one, we are going to utilize LISA cluster map.
 
+***
+
 ## LISA cluster map
 
 We set the level of significance to 0.2 for quality visualizations.
-```{r lisa, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+
+```{r lisa, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 
 # -------------------  to create LISA cluster map ------------------- 
 
@@ -307,15 +400,18 @@ plot(OA.Census,border="lightgray",col=colors[findInterval(quadrant,brks,all.insi
 legend("bottomleft",legend=c("insignificant","low-low","low-high","high-low","high-high"),
        fill=colors,bty="n")
 ```
+<br>
 We can now observe, which clusters are of high and which of low values. North areas of Kensington have mostly low employment rates however they border with areas of high values (hence light blue color), while some of the Chelsea's areas with high employment rates border with low values (hence light red), even though these are in the center of Chelsea. Additionally we can see a few clusters of high-high and low-low (strong red/blue color) - these are areas bordering with other similar to them in terms of employment. We can conclude, that the data is significantly clustered in means of employment.
 
+***
 
 ## GETIS-ORD
 
 We can also check whether the Getis-Ord Gi statistic can help us with our analysis. Thanks to that we can broaden our analysis with proximity based neighbours instead of border based.
 
 We set the proximity to 750 meters (which emphasize clusters most efficiently) and observe hot-spots based on intenisty of clusters, on the map below:
-```{r getis_ord, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+<br>
+```{r getis_ord, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 
 # -------------------  GETIS-ORD ------------------- 
 
@@ -331,19 +427,24 @@ names(local_g)[58] <- "gi_statistic"
 tm_shape(local_g) + tm_fill("gi_statistic", palette = "-RdBu", style = "pretty") +
   tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 ```
+<br>
 We can clearly see that there are three main clusters:
+
 - of low values in the north
 - of high values in the center
 - of slightly high values in the south
 
 Let's see if we can infer more from regression models and explain the employment rate.
 
+***
+
 ## Linear model - employment rate
 
 We will start with the OLS model.
 
 Using backward variable selection we eliminated most of the insignificant variables and came up with following model:
-```{r linear_model, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+<br>
+```{r linear_model, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 
 # -------------------  LINEAR MODEL ------------------- 
 
@@ -354,28 +455,32 @@ summary(model_sig_2)
 par(mfrow=c(2,2))
 plot(model_sig_2)
 ```
+<br>
 We obtain almost ideally fitted model, with R-squared = 0.99. It means that the variables that we chose explain it very accurately. We can further explore the coefficients- all of them are positive, however qualifications level is the strongest one. Indicator that people live alone being the weakest. We can also observe that both white and black races, surprisingly considering previous data explorations, impact the employed indicator in almost the same way.
 
 Let's see if residuals vary among different OAs.
-
-```{r linear_model_resids, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+<br>
+```{r linear_model_resids, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 resids<-residuals(model_sig_2)
 map.resids <- cbind(OA.Census, resids)
 names(map.resids)[58] <- "resids"
 
 tm_shape(map.resids) + tm_fill("resids", palette="Blues") + tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 ```
-
+<br>
 There are no significant patterns, so we may expect that there are no variables that are unobserved in our analysis. However, spatial analysis using Geographically Weighted Regression (GWR) may bring more information.
+
+***
 
 ## GWR - employment rate
 
 We start with calculating kernel bandwith for GWR computation.
-```{r gwr_adapt, include=False}
+<br>
+```{r gwr_adapt, include=FALSE}
 GWRbandwidth <- gwr.sel(OA.Census$employed ~ .-1, data = OA.Census[,sig_cols_2], adapt =TRUE)
 ```
 
-```{r gwr, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+```{r gwr, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 
 # ------------------- GWR ------------------- 
 
@@ -385,8 +490,8 @@ gwr.model
 ```
 
 R-squared seems to be much lower, let's see how it looks in division to the areas. 
-
-```{r gwr_r2local, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+<br>
+```{r gwr_r2local, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 results <-as.data.frame(gwr.model$SDF)
 gwr.map <- cbind(OA.Census[,sig_cols_2], as.matrix(results))
 
@@ -396,7 +501,8 @@ tm_shape(gwr.map) + tm_fill("localR2", palette="PuBuGn")+ tm_borders(alpha=.4) +
 It seems that the model is best fitted to the areas in the north, where the local R-squared is the highest.
 
 Same as in the linear model, all coefficients are positive. We can further explore them divided among OAs.
-```{r gwr_results, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+<br>
+```{r gwr_results, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 # create tmap objects
 map1 <- tm_shape(gwr.map) + tm_fill("white", n = 5, style = "quantile", palette="Blues",
                                     title = "white") +
@@ -452,16 +558,19 @@ print(map9, vp=viewport(layout.pos.col = 1, layout.pos.row =1))
 print(map10, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
 
 ```
+<br>
 Coefficients based on race turned out to impact north-center areas the most. Similarly with qualifications - south part, mainly Chelsea is impacted in almost the same way with lowest and highest qualifications.
 
 Let's see how the models will predict the mean house prices aggregated by the OA.
+
+***
 
 ## LINEAR MODEL - PRICES
 
 We will work through the same methodology as with the employment rate.
 
 Using backward variables selection we eliminated most of the insignificant variables and came up with following model:
-
+<br>
 ```{r linear_price, echo=FALSE, warning=FALSE}
 
 # -------------------  LINEAR MODEL - PRICE ------------------- 
@@ -473,21 +582,23 @@ summary(model_sig)
 ```
 
 On this target variable, the model is not that well-fitted, its R-squared equals to 0.399. It is interesting that the percentage of Jews impacts the average price the most postively, while having one car or no car the most negatively. The intercept estimates to over 6 million. Let's check the residuals on each of the OAs.
-
-```{r linear_price_resids, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+<br>
+```{r linear_price_resids, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 
 resids<-residuals(model_sig)
 map.resids <- cbind(OA.Census.mp, resids)
 names(map.resids)[58] <- "resids"
 tm_shape(map.resids) + tm_fill("resids", palette="Blues") + tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 ```
-
+<br>
 There are no patterns to the residuals, so we may conclude that we did not omit any significant variable in our modelling process.
 
 Maybe GWR model will bring more value.
 
-## GWR - PRICES
+***
 
+## GWR - PRICES
+<br>
 ```{r gwr_band, echo=FALSE, warning=FALSE, include=FALSE}
 
 GWRbandwidth <- gwr.sel(OA.Census.mp$mean_price ~ ., data = OA.Census.mp[,sig_cols], adapt =TRUE)
@@ -504,17 +615,18 @@ gwr.model
 ```
 
 This time, R-squared is higher than in the linear model - local R-squared can be observed on the plot below:
-
-```{r gwr_localr22, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+<br>
+```{r gwr_localr22, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 results <-as.data.frame(gwr.model$SDF)
 gwr.map <- cbind(OA.Census.mp[,sig_cols], as.matrix(results))
 tm_shape(gwr.map) + tm_fill("localR2", palette="PuBuGn")+ tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 ```
+<br>
 GWR clearly fits north-west part better and gradually lowers the quality of fit going further east.
 
 Let's further explore the results plotting each variable and its coefficients.
-
-```{r gwr_price_results, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+<br>
+```{r gwr_price_results, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 
 # create tmap objects
 map1 <- tm_shape(gwr.map) + tm_fill("single", n = 5, style = "quantile", palette="Greens",
@@ -621,19 +733,22 @@ print(map18, vp=viewport(layout.pos.col = 2, layout.pos.row =1))
 print(map19, vp=viewport(layout.pos.col = 1, layout.pos.row =2))
 print(map20, vp=viewport(layout.pos.col = 2, layout.pos.row =2))
 ```
-- Having one car or not having a car at all impacts north areas in almost the same way. 
-- Density of Jews in the south clearly reproduced in its coefficients values that emphasize prices on the south area.
-- On the other hand, OAs in the north with higher density of Asians will be mostly negatively impacted, similar to single people density.
-- The more Muslims in the center of Chelsea the lower the house prices, similar to density of people in the age between 30 and 44.
-- Density of private rent in the south positively impacts the price.
-- It is interesting that in the north, highest qualifications impact the price more than in the center and south.
+<br>
 
+* Having one car or not having a car at all impacts north areas in almost the same way. 
+* Density of Jews in the south clearly reproduced in its coefficients values that emphasize prices on the south area.
+* On the other hand, OAs in the north with higher density of Asians will be mostly negatively impacted, similar to single people density.
+* The more Muslims in the center of Chelsea the lower the house prices, similar to density of people in the age between 30 and 44.
+* Density of private rent in the south positively impacts the price.
+* It is interesting that in the north, highest qualifications impact the price more than in the center and south.
+
+***
 
 ## Interpolation
 
 We are now going to try different technique, called interpolation. Because we lack data in some of the OAs, we will use this method to "fill in the gaps". For the first method we will need to create Thiessen polygons, that actually creates areas similar to our OAs, by assigning boundaries to the closest housing point. We then clip those boundaries to the area of Kensington and Chelsea and finally plot them on the map, filling the areas with price levels.
-
-```{r interpolation, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+<br>
+```{r interpolation, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 
 # ------------------- Interpolation ------------------- 
 
@@ -655,13 +770,16 @@ tm_shape(thiessen.crop) + tm_fill(col = "price_paid", style = "quantile", palett
   tm_layout(legend.position = c("left", "bottom"), legend.text.size = 1.05,
             legend.title.size = 1.2, frame = FALSE)
 ```
+<br>
 Looking at the arrangement of polygons we can determine that there are indeed groups of neighbours on south and center-west while the polygons in the north are much more apart. Of course considering the data we used for 2011.
 
+***
 
 ## Inverse Distance Weighting (IDW)
 
 Next, we will use IDW. We will convert point data of house prices to numerical values spread over continous surface - mostly for easier and more approachable visualisations how the data is distributed across space. This is also a method of interpolation - just different to usage of Thiessen polygons.
-```{r idw, echo=FALSE, warning=FALSE}
+<br>
+```{r idw, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
 
 # ------------------- Inverse distance weighting ------------------- 
 
@@ -677,18 +795,17 @@ coordinates(spg) <- ~ long + lat
 gridded(spg) <- TRUE
 raster_idw <- raster(spg)
 projection(raster_idw) <- CRS("+init=EPSG:27700")
-# plot(raster_idw)
 ```
 
+**3D Plotting**
 
-## 3D PLOTTING
 ```{r 3dplots, echo=FALSE, warning=FALSE, fig.height=8, fig.width=8, message=FALSE}
 
 # ------------------- 3D PLOTTING ------------------- 
 persp(raster_idw)
 
 idw2 <- as.matrix(raster_idw)
-persp3d(idw2, col = "red")
+# persp3d(idw2, col = "red")
 
 # masks our raster by our output areas polygon file
 masked_idw <- mask(raster_idw, Output.Areas)
@@ -702,21 +819,10 @@ tm_shape(masked_idw) + tm_raster("prediction", style = "quantile", n = 100,
   tm_layout(legend.position = c("left", "bottom"), legend.text.size = 1.1,
             legend.title.size = 1.4, frame = FALSE)
 ```
+<br>
 3D visualisation (especially the interactive version - which cannot be seen in Markdown, but code for it is provided) further reassure our previous remarks.
 
-
-## Geostatistical interpolation
-```{r geo_interpolation, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
-# ------------------- Geostatistical interpolation ------------------- 
-grid <-spsample(House.Points, type = 'regular', n = 20000)
-# runs the kriging
-kriging_result = autoKrige(log(price_paid)~1, House.Points, grid)
-```
-
-```{r geo_interpolation_plot, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=8,}
-plot(kriging_result)
-```
-
+***
 
 ## Conclusion
 
@@ -728,4 +834,4 @@ Considering our hypotheses though, we confirmed that demographic factors do inde
 However, mean prices of houses in the OAs are dependant on spatial factors as well as variables from the same OA - GWR model introduced improved results comparing to simple linear regression.
 
 We acknowledge shortcomings of our work - for example we only analyzed prices of actually SOLD houses. That is however the only data accessible in a well structured format - we would analyze prices of listed houses but that would require a lot of scrapping from sources we are not familiar with.
-Of course, we would like to also include other districts in our research - maybe compare less diverse than K&D and see whether there are major differences in e.g. house price patterns.
+Of course, we would like to also include other districts in our research - maybe compare less diverse than K&C and see whether there are major differences in e.g. house price patterns.

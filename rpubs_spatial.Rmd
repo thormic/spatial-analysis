@@ -55,6 +55,8 @@ In this project we conducted spatial analysis of Kensington and Chelsea district
     
 * [Helpful code snippets](https://data.cdrc.ac.uk/dataset/introduction-spatial-data-analysis-and-visualisation-r/resource/practical-5-making-maps-r)
 
+If you would like to see the source code for this analysis it is provided on GitHub repository - link in the top right corner.
+
 ***
 
 ## Context
@@ -835,3 +837,8 @@ However, mean prices of houses in the OAs are dependant on spatial factors as we
 
 We acknowledge shortcomings of our work - for example we only analyzed prices of actually SOLD houses. That is however the only data accessible in a well structured format - we would analyze prices of listed houses but that would require a lot of scrapping from sources we are not familiar with.
 Of course, we would like to also include other districts in our research - maybe compare less diverse than K&C and see whether there are major differences in e.g. house price patterns.
+
+
+***
+
+Thank you, hope you enjoyed it.

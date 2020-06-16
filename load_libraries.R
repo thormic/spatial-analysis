@@ -18,7 +18,7 @@ list.of.packages <- c("ggplot2",
                       "maptools",
                       "gstat",
                       "xts",
-                      # "rgl",
+                      "rgl",
                       "automap",
                       "olsrr",
                       "tidyverse",
@@ -48,7 +48,7 @@ library(spatstat)
 library(maptools)
 library(gstat)
 library(xts)
-# library(rgl)
+library(rgl)
 library(automap)
 library(olsrr)
 library(tidyverse)

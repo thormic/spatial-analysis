@@ -80,29 +80,29 @@ First, let us load the previously prepared data:
 
 ```{r load_data, echo=TRUE, warning=FALSE, message=FALSE}
 
-Census.Data <- read.csv("census_data.csv")
-houseData <- read.csv("house_data.csv")
+data <- read.csv("census_data.csv")
+house_data <- read.csv("house_data.csv")
 
-House.Points <-SpatialPointsDataFrame(houseData[,6:7], houseData,
+locations <-SpatialPointsDataFrame(house_data[,6:7], house_data,
                                       proj4string = CRS("+init=EPSG:27700"))
 
-hist_df <- gather(Census.Data[,-1], key = "name", value = "value")
+hist_df <- gather(data[,-1], key = "name", value = "value")
 
-Output.Areas <- readOGR("data/statistical-gis-boundaries-london/ESRI", "OA_2011_London_gen_MHW")
-Output.Areas <- Output.Areas[Output.Areas$LAD11NM=="Kensington and Chelsea",]
+output_areas <- readOGR("data/statistical-gis-boundaries-london/ESRI", "OA_2011_London_gen_MHW")
+output_areas <- output_areas[output_areas$LAD11NM=="Kensington and Chelsea",]
 
-OA.Census <- merge(Output.Areas, Census.Data, by.y ="OA", by.x="OA11CD")
-proj4string(OA.Census) <- CRS("+init=EPSG:27700")
+oa_data <- merge(output_areas, data, by.y ="OA", by.x="OA11CD")
+proj4string(oa_data) <- CRS("+init=EPSG:27700")
 
-House.Agg <- houseData %>%
+house_data_agg <- house_data %>%
   group_by(oa11) %>%
   dplyr::summarize(mean_price = mean(price_paid, na.rm=TRUE))
 
-houses_merged <-  Census.Data %>%
-  inner_join(House.Agg, by = c("OA" = "oa11"))
+houses_merged <-  data %>%
+  inner_join(house_data_agg, by = c("OA" = "oa11"))
 
-OA.Census.mp <- merge(Output.Areas, houses_merged, by.y ="OA", by.x="OA11CD", all = FALSE)
-proj4string(OA.Census.mp) <- CRS("+init=EPSG:27700")
+oa_data.mp <- merge(output_areas, houses_merged, by.y ="OA", by.x="OA11CD", all = FALSE)
+proj4string(oa_data.mp) <- CRS("+init=EPSG:27700")
 ```
 
 
@@ -128,8 +128,8 @@ Now, let's check distribution of percentages across all OA's of religion-based v
 <br>
 ```{r boxplot1, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 
-boxplot(Census.Data$christian, Census.Data$muslim, Census.Data$jewish,
-        Census.Data$no_religion, ylim=c(0,100),
+boxplot(data$christian, data$muslim, data$jewish,
+        data$no_religion, ylim=c(0,100),
         col = "dodgerblue", rectCol="dodgerblue3", colMed="dodgerblue4",
         names=c("Christian", "Muslim", "Jewish", "No religion"),
         main = "Distribution of religions per OA")
@@ -138,8 +138,8 @@ boxplot(Census.Data$christian, Census.Data$muslim, Census.Data$jewish,
 We can see that the majority of inhabitants of K&C are christian - however there are many outliers in muslim religion meaning that there could be heavy muslim-biased OA districts in K&C.
 
 ```{r boxplot2, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
-boxplot(Census.Data$white, Census.Data$black_african, Census.Data$asian,
-        Census.Data$other_arab, ylim=c(0,100),
+boxplot(data$white, data$black_african, data$asian,
+        data$other_arab, ylim=c(0,100),
         col = "dodgerblue", rectCol="dodgerblue3", colMed="dodgerblue4",
         names=c("White people", "Black/African", "Asian", "Other/Arabs"),
         main = "Distribution of race per OA")
@@ -148,8 +148,8 @@ boxplot(Census.Data$white, Census.Data$black_african, Census.Data$asian,
 Once again, there is one overwhelming group - white people, but there are few outliers in every religion, therefore meaning again that we might have some districts that would greatly differ from the rest.
 
 ```{r boxplot3, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
-boxplot(Census.Data$employed, Census.Data$unemployed, Census.Data$kids_english, Census.Data$male, Census.Data$white,
-        Census.Data$Age_30_44, Census.Data$married, Census.Data$owned,  ylim=c(0,100),
+boxplot(data$employed, data$unemployed, data$kids_english, data$male, data$white,
+        data$Age_30_44, data$married, data$owned,  ylim=c(0,100),
         col = "dodgerblue", rectCol="dodgerblue3", colMed="dodgerblue4",
         names=c("Employed", "Unemployed", "Kids speaking english", "Male", "White people", "Age 30-44", "Married", "Property owned"),
         main = "Distribution of certain variables per OA")
@@ -164,10 +164,10 @@ Now let us explore dependencies between some variables that we would expect to b
 
 # Scatterplots with regression line
 
-p <- ggplot(Census.Data, aes(unemployed, highest_quali))
+p <- ggplot(data, aes(unemployed, highest_quali))
 p + geom_point(aes(colour = muslim, size = black_african)) 
 
-p2 <- ggplot(Census.Data, aes(highest_quali, employed))
+p2 <- ggplot(data, aes(highest_quali, employed))
 p2 + geom_point(aes(colour = white, size = other_eu))
 
 ```
@@ -182,7 +182,7 @@ On the second one the correlation between being employment rate and percentage o
 
 # Correlation plot
 
-M<-cor(Census.Data[,-1])
+M<-cor(data[,-1])
 corrplot(M, type="upper", order="hclust",
          col=brewer.pal(n=8, name="RdYlBu"))
 ```
@@ -201,19 +201,19 @@ Now we will explore how percentages of citizens with highest qualification, of b
 # Maps with filling 
 tmap_mode("view")
 
-tm_shape(OA.Census) + tm_fill("highest_quali", palette = "Purples", style = "quantile",
+tm_shape(oa_data) + tm_fill("highest_quali", palette = "Purples", style = "quantile",
                               title = "% with a highest Qualifications") + tm_borders(alpha=.4)
 
-tm_shape(OA.Census) + tm_fill("black_african", palette = "YlGn", style = "quantile",
+tm_shape(oa_data) + tm_fill("black_african", palette = "YlGn", style = "quantile",
                               title = "% of Black/African") + tm_borders(alpha=.4)
 
-tm_shape(OA.Census) + tm_fill("muslim", palette = "GnBu", style = "quantile",
+tm_shape(oa_data) + tm_fill("muslim", palette = "GnBu", style = "quantile",
                               title = "% of Muslim") + tm_borders(alpha=.4)
 
-tm_shape(OA.Census) + tm_fill("white", palette = "PuBu", style = "quantile",
+tm_shape(oa_data) + tm_fill("white", palette = "PuBu", style = "quantile",
                               title = "% of White") + tm_borders(alpha=.4)
 
-tm_shape(OA.Census) + tm_fill("united_kingdom", palette = "BuGn", style = "quantile",
+tm_shape(oa_data) + tm_fill("united_kingdom", palette = "BuGn", style = "quantile",
                               title = "% of born in UK") + tm_borders(alpha=.4)
 ```
 <br>
@@ -227,10 +227,10 @@ Let us explore how prices of houses in K&C compare with distribution of citizens
 ```{r price_var_maps, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 
 # Plot maps with house prices and variables
-tm_shape(OA.Census) + tm_fill("other_eu", palette = "Greens",
+tm_shape(oa_data) + tm_fill("other_eu", palette = "Greens",
                               style = "quantile", title = "% of citizens born in EU") +
   tm_borders(alpha=.4) +
-  tm_shape(House.Points) + tm_bubbles(col = "price_paid", size = 0.2,
+  tm_shape(locations) + tm_bubbles(col = "price_paid", size = 0.2,
                                       palette = "Blues", style = "quantile",
                                       legend.size.show = FALSE,
                                       title.col = "Price Paid (£)",
@@ -239,10 +239,10 @@ tm_shape(OA.Census) + tm_fill("other_eu", palette = "Greens",
   tm_layout(legend.text.size = 0.8, legend.title.size = 1.1, frame = FALSE)
 
 
-tm_shape(OA.Census) + tm_fill("unemployed", palette = "Oranges",
+tm_shape(oa_data) + tm_fill("unemployed", palette = "Oranges",
                               style = "quantile", title = "% Unemployed") +
   tm_borders(alpha=.4) +
-  tm_shape(House.Points) + tm_bubbles(col = "price_paid", size = 0.2,
+  tm_shape(locations) + tm_bubbles(col = "price_paid", size = 0.2,
                                       palette = "Blues", style = "quantile",
                                       legend.size.show = FALSE,
                                       title.col = "Price Paid (£)",
@@ -257,12 +257,12 @@ So, there is the answer - those mostly-white OAs with high rate of qualification
 
 ```{r load_kernels, echo=FALSE, warning=FALSE, message=FALSE}
 
-kde.output <- kernelUD(House.Points, h="href", grid = 1000)
+kde.output <- kernelUD(locations, h="href", grid = 1000)
 kde <- raster(kde.output)
 projection(kde) <- CRS("+init=EPSG:27700")
 tmap_mode("plot")
-bounding_box <- bbox(Output.Areas)
-masked_kde <- mask(kde, Output.Areas)
+bounding_box <- bbox(output_areas)
+masked_kde <- mask(kde, output_areas)
 ```
 
 ```{r kernel_density, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5, fig.width=8}
@@ -271,15 +271,15 @@ kernel1 <- tm_shape(masked_kde, bbox = bounding_box) + tm_raster("ud", style = "
                                                       n = 100,
                                                       legend.show = FALSE,
                                                       palette = "YlGnBu") +
-  tm_shape(Output.Areas) + tm_borders(alpha=.3, col = "white") +
+  tm_shape(output_areas) + tm_borders(alpha=.3, col = "white") +
   tm_layout(frame = FALSE) 
 
 range75 <- getverticeshr(kde.output, percent = 75)
 range50 <- getverticeshr(kde.output, percent = 50)
 range25 <- getverticeshr(kde.output, percent = 25)
 
-kernel2 <- tm_shape(Output.Areas) + tm_fill(col = "#f0f0f0") + tm_borders(alpha=.8, col = "white") +
-  tm_shape(House.Points) + tm_dots(col = "blue") +
+kernel2 <- tm_shape(output_areas) + tm_fill(col = "#f0f0f0") + tm_borders(alpha=.8, col = "white") +
+  tm_shape(locations) + tm_dots(col = "blue") +
   tm_shape(range75) + tm_borders(alpha=.7, col = "#fb6a4a", lwd = 2) +
 tm_fill(alpha=.1, col = "#fb6a4a") +
   tm_shape(range50) + tm_borders(alpha=.7, col = "#de2d26", lwd = 2) +
@@ -311,20 +311,20 @@ Firstly, we need to compute polygons for our dataset, which we are going to use 
 
 # ------------------- Finding neighbours -------------------
 
-neighbours <- poly2nb(OA.Census)
-neighbours2 <- poly2nb(OA.Census, queen = FALSE)
+neighbours <- poly2nb(oa_data)
+neighbours2 <- poly2nb(oa_data, queen = FALSE)
 
-# plot(OA.Census, border = 'lightgrey')
-# plot(neighbours, coordinates(OA.Census), add=TRUE, col='blue')
-# plot(neighbours2, coordinates(OA.Census), add=TRUE, col='red')
+# plot(oa_data, border = 'lightgrey')
+# plot(neighbours, coordinates(oa_data), add=TRUE, col='blue')
+# plot(neighbours2, coordinates(oa_data), add=TRUE, col='red')
 
 par(fig=c(0,0.5,0,1))
-plot(OA.Census, border = 'lightgrey')
-plot(neighbours, coordinates(OA.Census), add=TRUE, col='blue')
+plot(oa_data, border = 'lightgrey')
+plot(neighbours, coordinates(oa_data), add=TRUE, col='blue')
 
 par(fig=c(0.5,1,0,1), new=TRUE)
-plot(OA.Census, border = 'lightgrey')
-plot(neighbours2, coordinates(OA.Census), add=TRUE, col='red')
+plot(oa_data, border = 'lightgrey')
+plot(neighbours2, coordinates(oa_data), add=TRUE, col='red')
 ```
 
 ```{r reset_plots3, echo=FALSE, include=FALSE}
@@ -345,7 +345,7 @@ Moran I Test:
 
 # ------------------- Running a global spatial autocorrelation -------------------
 listw <- nb2listw(neighbours2)
-moran.test(OA.Census$employed, listw)
+moran.test(oa_data$employed, listw)
 ```
 <br>
 Employed indicator has 0.34 Moran's I statistic so it has a slight positive autocorrelation. Now, we have reasons to believe that the data does spatially cluster.
@@ -363,9 +363,9 @@ Below, you can observe local moran statistic on our map broken down by OA:
 # ------------------- Running a local spatial autocorrelation -------------------
 
 # Moran output for local 
-local <- localmoran(x = OA.Census$employed,
+local <- localmoran(x = oa_data$employed,
                     listw = nb2listw(neighbours2, style = "W"))
-moran.map <- cbind(OA.Census, local)
+moran.map <- cbind(oa_data, local)
 tm_shape(moran.map) + tm_fill(col = "Ii", style = "quantile", palette = "GnBu", title = "local moran statistic") + tm_layout(frame = FALSE)
 
 ```
@@ -385,7 +385,7 @@ We set the level of significance to 0.2 for quality visualizations.
 # -------------------  to create LISA cluster map ------------------- 
 
 quadrant <- vector(mode="numeric",length=nrow(local))
-m.employed <- OA.Census$employed - mean(OA.Census$employed)
+m.employed <- oa_data$employed - mean(oa_data$employed)
 m.local <- local[,1] - mean(local[,1])
 # Set significance threshold
 signif <- 0.2
@@ -398,7 +398,7 @@ quadrant[local[,5]>signif] <- 0
 
 brks <- c(0,1,2,3,4)
 colors <- c("white","blue",rgb(0,0,1,alpha=0.4),rgb(1,0,0,alpha=0.4),"red")
-plot(OA.Census,border="lightgray",col=colors[findInterval(quadrant,brks,all.inside=FALSE)])
+plot(oa_data,border="lightgray",col=colors[findInterval(quadrant,brks,all.inside=FALSE)])
 legend("bottomleft",legend=c("insignificant","low-low","low-high","high-low","high-high"),
        fill=colors,bty="n")
 ```
@@ -417,13 +417,13 @@ We set the proximity to 750 meters (which emphasize clusters most efficiently) a
 
 # -------------------  GETIS-ORD ------------------- 
 
-nb <- dnearneigh(coordinates(OA.Census),0,750)
+nb <- dnearneigh(coordinates(oa_data),0,750)
 nb_lw <- nb2listw(nb, style = 'B')
 
 
 # Gi statistic
-local_g <- localG(OA.Census$employed, nb_lw)
-local_g <- cbind(OA.Census, as.matrix(local_g))
+local_g <- localG(oa_data$employed, nb_lw)
+local_g <- cbind(oa_data, as.matrix(local_g))
 names(local_g)[58] <- "gi_statistic"
 
 tm_shape(local_g) + tm_fill("gi_statistic", palette = "-RdBu", style = "pretty") +
@@ -451,7 +451,7 @@ Using backward variable selection we eliminated most of the insignificant variab
 # -------------------  LINEAR MODEL ------------------- 
 
 sig_cols_2 <- c('white', 'black_african', 'single', 'lowest_quali','highest_quali')
-model_sig_2 <- lm(OA.Census$employed ~ .-1, data = OA.Census[,sig_cols_2])
+model_sig_2 <- lm(oa_data$employed ~ .-1, data = oa_data[,sig_cols_2])
 summary(model_sig_2)
 
 par(mfrow=c(2,2))
@@ -464,7 +464,7 @@ Let's see if residuals vary among different OAs.
 <br>
 ```{r linear_model_resids, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 resids<-residuals(model_sig_2)
-map.resids <- cbind(OA.Census, resids)
+map.resids <- cbind(oa_data, resids)
 names(map.resids)[58] <- "resids"
 
 tm_shape(map.resids) + tm_fill("resids", palette="Blues") + tm_borders(alpha=.4) + tm_layout(frame = FALSE)
@@ -479,15 +479,15 @@ There are no significant patterns, so we may expect that there are no variables 
 We start with calculating kernel bandwith for GWR computation.
 <br>
 ```{r gwr_adapt, include=FALSE}
-GWRbandwidth <- gwr.sel(OA.Census$employed ~ .-1, data = OA.Census[,sig_cols_2], adapt =TRUE)
+GWRbandwidth <- gwr.sel(oa_data$employed ~ .-1, data = oa_data[,sig_cols_2], adapt =TRUE)
 ```
 
 ```{r gwr, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 
 # ------------------- GWR ------------------- 
 
-gwr.model = gwr(OA.Census$employed ~ .-1,
-                data = OA.Census[,sig_cols_2], adapt=GWRbandwidth, hatmatrix=TRUE, se.fit=TRUE)
+gwr.model = gwr(oa_data$employed ~ .-1,
+                data = oa_data[,sig_cols_2], adapt=GWRbandwidth, hatmatrix=TRUE, se.fit=TRUE)
 gwr.model
 ```
 
@@ -495,7 +495,7 @@ R-squared seems to be much lower, let's see how it looks in division to the area
 <br>
 ```{r gwr_r2local, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 results <-as.data.frame(gwr.model$SDF)
-gwr.map <- cbind(OA.Census[,sig_cols_2], as.matrix(results))
+gwr.map <- cbind(oa_data[,sig_cols_2], as.matrix(results))
 
 tm_shape(gwr.map) + tm_fill("localR2", palette="PuBuGn")+ tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 ```
@@ -578,7 +578,7 @@ Using backward variables selection we eliminated most of the insignificant varia
 # -------------------  LINEAR MODEL - PRICE ------------------- 
 sig_cols <- c( 'single', 'muslim','highest_quali', 'jewish', 'asian', 'one_car', 'no_cars',
                'Age_30_44', 'employed', 'private_rent')
-model_sig <- lm(OA.Census.mp$mean_price ~ ., data = OA.Census.mp[sig_cols])
+model_sig <- lm(oa_data.mp$mean_price ~ ., data = oa_data.mp[sig_cols])
 summary(model_sig)
 
 ```
@@ -588,7 +588,7 @@ On this target variable, the model is not that well-fitted, its R-squared equals
 ```{r linear_price_resids, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 
 resids<-residuals(model_sig)
-map.resids <- cbind(OA.Census.mp, resids)
+map.resids <- cbind(oa_data.mp, resids)
 names(map.resids)[58] <- "resids"
 tm_shape(map.resids) + tm_fill("resids", palette="Blues") + tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 ```
@@ -603,15 +603,15 @@ Maybe GWR model will bring more value.
 <br>
 ```{r gwr_band, echo=FALSE, warning=FALSE, include=FALSE}
 
-GWRbandwidth <- gwr.sel(OA.Census.mp$mean_price ~ ., data = OA.Census.mp[,sig_cols], adapt =TRUE)
+GWRbandwidth <- gwr.sel(oa_data.mp$mean_price ~ ., data = oa_data.mp[,sig_cols], adapt =TRUE)
 ```
 
 ```{r gwr_price, echo=FALSE, warning=FALSE}
 
 # ------------------- GWR - PRICE ------------------- 
 
-gwr.model = gwr(OA.Census.mp$mean_price ~ .,
-                data = OA.Census.mp[,sig_cols], adapt=GWRbandwidth, hatmatrix=TRUE, se.fit=TRUE)
+gwr.model = gwr(oa_data.mp$mean_price ~ .,
+                data = oa_data.mp[,sig_cols], adapt=GWRbandwidth, hatmatrix=TRUE, se.fit=TRUE)
 gwr.model
 
 ```
@@ -620,7 +620,7 @@ This time, R-squared is higher than in the linear model - local R-squared can be
 <br>
 ```{r gwr_localr22, echo=FALSE, warning=FALSE, fig.height=6, fig.width=8}
 results <-as.data.frame(gwr.model$SDF)
-gwr.map <- cbind(OA.Census.mp[,sig_cols], as.matrix(results))
+gwr.map <- cbind(oa_data.mp[,sig_cols], as.matrix(results))
 tm_shape(gwr.map) + tm_fill("localR2", palette="PuBuGn")+ tm_borders(alpha=.4) + tm_layout(frame = FALSE)
 ```
 <br>
@@ -754,21 +754,21 @@ We are now going to try different technique, called interpolation. Because we la
 
 # ------------------- Interpolation ------------------- 
 
-dat.pp <- as(dirichlet(as.ppp(House.Points)), "SpatialPolygons")
+dat.pp <- as(dirichlet(as.ppp(locations)), "SpatialPolygons")
 dat.pp <- as(dat.pp,"SpatialPolygons")
 
 proj4string(dat.pp) <- CRS("+init=EPSG:27700")
-proj4string(House.Points) <- CRS("+init=EPSG:27700")
+proj4string(locations) <- CRS("+init=EPSG:27700")
 
-int.Z <- over(dat.pp,House.Points, fn=mean)
+int.Z <- over(dat.pp,locations, fn=mean)
 
 thiessen <- SpatialPolygonsDataFrame(dat.pp, int.Z)
-thiessen.crop <-crop(thiessen, Output.Areas)
+thiessen.crop <-crop(thiessen, output_areas)
 
 tm_shape(thiessen.crop) + tm_fill(col = "price_paid", style = "quantile", palette = "Blues",
                                   title = "Price Paid (£)") +
   tm_borders(alpha=.3, col = "black") +
-  tm_shape(House.Points) + tm_dots(col = "black") +
+  tm_shape(locations) + tm_dots(col = "black") +
   tm_layout(legend.position = c("left", "bottom"), legend.text.size = 1.05,
             legend.title.size = 1.2, frame = FALSE)
 ```
@@ -785,8 +785,8 @@ Next, we will use IDW. We will convert point data of house prices to numerical v
 
 # ------------------- Inverse distance weighting ------------------- 
 
-grid <-spsample(House.Points, type = 'regular', n = 20000)
-idw <- idw(House.Points$price_paid ~ 1, House.Points, newdata= grid)
+grid <-spsample(locations, type = 'regular', n = 20000)
+idw <- idw(locations$price_paid ~ 1, locations, newdata= grid)
 
 idw.output = as.data.frame(idw)
 names(idw.output)[1:3] <- c("long", "lat", "prediction")
@@ -810,11 +810,11 @@ idw2 <- as.matrix(raster_idw)
 # persp3d(idw2, col = "red")
 
 # masks our raster by our output areas polygon file
-masked_idw <- mask(raster_idw, Output.Areas)
+masked_idw <- mask(raster_idw, output_areas)
 # plots the masked raster
 tm_shape(masked_idw) + tm_raster("prediction", style = "quantile", n = 100,
                                  legend.show = FALSE) +
-  tm_shape(House.Points) + tm_bubbles(size = "price_paid", col = "price_paid",
+  tm_shape(locations) + tm_bubbles(size = "price_paid", col = "price_paid",
                                       palette = "Blues", style = "quantile",
                                       legend.size.show = FALSE,
                                       title.col = "Price Paid (£)") +
